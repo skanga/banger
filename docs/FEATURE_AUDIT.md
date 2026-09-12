@@ -46,6 +46,12 @@ context tests verify unchanged saved history, repeatable compaction and intact
 call/result pairs. The limit remains a character budget for conversation JSON,
 not a provider-specific token budget including system text and tool schemas.
 
+Verification: all 349 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`af65fd6d6ae2eaa4ac5684dd640b7ecd59d90e15` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34721175268](https://github.com/skanga/banger/actions/runs/34721175268).
+
 ## Provider event framing
 
 The Anthropic and OpenAI-compatible adapters assemble multiline SSE data fields
