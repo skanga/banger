@@ -7,6 +7,40 @@ from dataclasses import dataclass
 import httpx
 
 
+async def event_lines(response):
+    """SSE uses UTF-8 and CR/LF boundaries, not Unicode splitlines boundaries."""
+    response.encoding = "utf-8"
+    line, carriage_return = [], False
+    async for chunk in response.aiter_text():
+        for character in chunk:
+            if character == "\n" and carriage_return:
+                carriage_return = False
+                continue
+            carriage_return = character == "\r"
+            if character in "\r\n":
+                yield "".join(line)
+                line = []
+            else:
+                line.append(character)
+
+
+async def event_data(response):
+    """Assemble SSE data fields; an unfinished event at EOF is discarded."""
+    data, first = [], True
+    async for line in event_lines(response):
+        if first:
+            line = line.removeprefix("\ufeff")
+            first = False
+        if not line:
+            if data:
+                yield "\n".join(data)
+                data = []
+            continue
+        field, _, value = line.partition(":")
+        if field == "data":
+            data.append(value.removeprefix(" "))
+
+
 @dataclass
 class ModelConfig:
     provider: str
@@ -166,10 +200,7 @@ class ModelClient:
     async def _stream(self, response, anthropic, on_text):
         content, calls = [], {}
         finished = False
-        async for line in response.aiter_lines():
-            if not line.startswith("data:"):
-                continue
-            payload = line[5:].strip()
+        async for payload in event_data(response):
             if payload == "[DONE]":
                 finished = True
                 break

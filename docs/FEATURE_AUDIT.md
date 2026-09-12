@@ -28,11 +28,27 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 337 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 345 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
 5. Continue strengthening language and markup analysis where the current evidence is narrower than Benzi's described capability.
+
+## Provider event framing
+
+The Anthropic and OpenAI-compatible adapters assemble multiline SSE data fields
+at blank-line event boundaries. A leading UTF-8 BOM is handled, comments and
+unneeded metadata fields are ignored, and unfinished events at EOF are discarded.
+Only CR, LF and CRLF delimit lines; Unicode separator characters inside model
+text are preserved. This follows the relevant
+[SSE framing rules](https://html.spec.whatwg.org/multipage/server-sent-events.html#event-stream-interpretation).
+
+Eight new provider regression cases failed before implementation. They cover
+both formats, all three line endings, fragmented UTF-8 network bytes, multiline
+JSON, text callbacks and incomplete completion events. Additional Unicode-content
+assertions exposed and fixed HTTPX's broader line-splitting behavior. Existing
+tool-call round trips remain covered. This is payload framing for model requests,
+not a browser EventSource implementation with event-ID reconnection.
 
 ## Model response validation
 
