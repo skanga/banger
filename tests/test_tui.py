@@ -15,7 +15,7 @@ async def wait_until(pilot, condition):
             await pilot.pause(0.01)
 
 
-async def test_compact_terminal_setup_and_approval_controls_remain_usable(tmp_path):
+async def test_compact_terminal_setup_and_approval_controls_remain_usable(tmp_path, click_ready):
     app = BangerApp(tmp_path)
     async with app.run_test(size=(80, 24)) as pilot:
         app.screen.query_one("#model", Input).value = "fixture-model"
@@ -24,7 +24,7 @@ async def test_compact_terminal_setup_and_approval_controls_remain_usable(tmp_pa
         await pilot.pause()
         start.scroll_visible(immediate=True, animate=False)
         await pilot.pause()
-        assert await pilot.click("#start")
+        await click_ready(pilot, "#start")
         await pilot.pause()
         assert app.agent is not None
         pending = asyncio.create_task(
@@ -33,12 +33,7 @@ async def test_compact_terminal_setup_and_approval_controls_remain_usable(tmp_pa
         try:
             await pilot.pause()
             assert isinstance(app.screen, Approval)
-            deny = app.screen.query_one("#deny")
-            await wait_until(
-                pilot,
-                lambda: deny.region.width > 0 and app.get_widget_at(*deny.region.center)[0] is deny,
-            )
-            assert await pilot.click(deny, offset=(deny.size.width // 2, deny.size.height // 2))
+            await click_ready(pilot, "#deny")
             assert await asyncio.wait_for(pending, timeout=5) == "deny"
             assert not isinstance(app.screen, Approval)
         finally:

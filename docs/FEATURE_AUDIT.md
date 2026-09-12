@@ -338,3 +338,10 @@ external-import replacement; five regression cases failed before their fixes.
 These comparisons are structural, not compiler proofs or complete source-diff
 matching. Changes that rename callers or exchange existing errors between call
 sites can still require runtime verification.
+
+The first native run passed the semantic cases but exposed an approval-click race
+in the older Windows/Python 3.11 end-to-end test. Both approval flows now share a
+bounded helper that waits for the button's center to be visibly clickable. The
+end-to-end test then waits for its actual worker to finish instead of polling a
+running flag for a fixed number of iterations. This is test synchronization, not
+a change to approval policy or application behavior.

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 import sys
@@ -95,7 +96,7 @@ async def test_query_edit_execute_and_resume_through_provider_protocol(tmp_path,
             assert len(requests) == 4
 
 
-async def test_tui_approval_and_completed_edit(tmp_path):
+async def test_tui_approval_and_completed_edit(tmp_path, click_ready):
     app = BangerApp(tmp_path)
     async with app.run_test(size=(120, 40)) as pilot:
         app.screen.query_one("#model", Input).value = "fixture-model"
@@ -129,11 +130,8 @@ async def test_tui_approval_and_completed_edit(tmp_path):
             await pilot.pause(0.02)
         assert isinstance(app.screen, Approval)
         assert not (tmp_path / "hello.py").exists()
-        await pilot.click("#allow")
-        for _ in range(100):
-            if not app.agent.running:
-                break
-            await pilot.pause(0.02)
+        await click_ready(pilot, "#allow")
+        await asyncio.wait_for(app.worker.wait(), timeout=10)
         assert (tmp_path / "hello.py").read_text() == "print('hello')\n"
         assert not app.agent.running
         assert app.agent.messages[-1]["role"] == "assistant"
