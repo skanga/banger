@@ -313,3 +313,8 @@ button's actual hit target and always cleans up its pending request. The session
 test now clicks tabs and waits for the selected pane to render: direct reactive
 tab assignments could be overwritten by queued focus messages. These changes
 strengthen the test's user-flow evidence without changing application behavior.
+
+The [corrected acceptance run](https://github.com/skanga/banger/actions/runs/34678392764)
+at commit `d2d23b446b9597f176e3c13a42625c6c4a0c1089` passed 195 tests in every
+Windows/Linux/macOS and Python 3.11/3.13 job. Lint, formatting, wheel and source
+distribution builds passed in all six jobs.
