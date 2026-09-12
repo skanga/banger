@@ -16,7 +16,8 @@ def assignment_names(node):
 
 def python_reads(content):
     try:
-        root = ast.parse(content, mode="eval").body
+        # Source segments can omit the grouping parentheses around multiline expressions.
+        root = ast.parse("(" + content + "\n)", mode="eval").body
     except (SyntaxError, ValueError):
         return set()
     reads = set()

@@ -183,6 +183,21 @@ class FlowAnalysis:
                 defaults = omitted_defaults(self.index.symbols[target], bindings, binding)
                 for param, origin in defaults.items():
                     identity = f"{target}|default|{param}"
+                    if identity not in nodes:
+                        source = expression(
+                            origin["scope"],
+                            origin["expression"],
+                            origin["path"],
+                            origin["line"],
+                        )
+                        edges.append(
+                            {
+                                "source": source,
+                                "target": identity,
+                                "evidence": "syntactic declaration-scope dependency",
+                                "kind": "default expression",
+                            }
+                        )
                     nodes[identity] = {
                         "id": identity,
                         "symbol": origin["scope"],

@@ -53,6 +53,7 @@ def test_nested_keyword_default_preserves_declaration_scope_and_restart(tmp_path
         assert origin["expression"] == "seed +\n  2"
         assert origin["scope"] == index.get_definition("outer")["id"]
         assert origin["line"] == 2
+        assert any(n.get("name") == "seed" for n in original["graph"]["nodes"])
         assert (
             FlowAnalysis(index).backflow("target", "missing")["call_sites"][0]["default"][
                 "expression"
@@ -63,3 +64,33 @@ def test_nested_keyword_default_preserves_declaration_scope_and_restart(tmp_path
         reopened = CodeIndex(tmp_path, state)
         reopened.refresh()
         assert FlowAnalysis(reopened).backflow("target", "value") == original
+
+
+@pytest.mark.parametrize("nested", [False, True])
+def test_default_backflow_reaches_declaration_dependencies(tmp_path, nested):
+    source = (
+        "def outer(seed):\n"
+        " derived = seed + 2\n"
+        " def target(value=derived): return value\n"
+        " return target() + target()\n"
+        if nested
+        else "seed = 7\nderived = seed + 2\ndef target(value=derived): return value\n"
+    )
+    (tmp_path / "lib.py").write_text(source)
+    if not nested:
+        (tmp_path / "app.py").write_text(
+            "from lib import target\ndef caller():\n derived = 99\n return target() + target()\n"
+        )
+    index = CodeIndex(tmp_path)
+    index.refresh()
+    graph = FlowAnalysis(index).backflow("target", "value")["graph"]
+    scope = index.get_definition("outer")["id"] if nested else None
+    seed = next(n for n in graph["nodes"] if n.get("name") == "seed")
+    assert seed["symbol"] == scope
+    assert seed["path"] == "lib.py"
+    assert not any(n.get("expression") == "99" for n in graph["nodes"])
+    links = [e for e in graph["edges"] if e.get("kind") == "default expression"]
+    assert len(links) == 1
+    default = next(n for n in graph["nodes"] if n["id"] == links[0]["target"])
+    assert default["expression"] == "derived"
+    assert default["symbol"] == scope

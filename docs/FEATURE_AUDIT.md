@@ -11,7 +11,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
 | Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
-| Forward/backward flow across calls | test_flow.py, test_flow_arguments.py, test_flow_defaults.py; shared Python signature binding, declared default origins and dependency graph with resolution evidence | Path-insensitive; ambiguous edges remain candidates; splats and decorated signatures unresolved; default values and upstream default dependencies unverified; other languages use positional approximations |
+| Forward/backward flow across calls | test_flow.py, test_flow_arguments.py, test_flow_defaults.py; shared Python signature binding, declaration-scope default dependencies and dependency graph with resolution evidence | Path-insensitive; ambiguous edges remain candidates; splats and decorated signatures unresolved; runtime default values and imported/free-variable default dependencies unverified; other languages use positional approximations |
 | Markup, CSS, DOM-JS, Python-embedded markup | test_markup.py | Conditional/browser-dependent rules, computed layout and exhaustive selector/cascade semantics not implemented |
 | Syntax and semantic write gates | test_edits.py, test_batch_edits.py, test_language_edits.py; syntax and lost-binding rejection across all ten languages, combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
 | Impact and relevant tests | Matching before/after edit reports with callers, value consumers, and relevant tests; persisted by snapshot ID | Test selection can miss dynamically invoked tests; reports do not execute tests |
@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 335 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 337 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -643,9 +643,20 @@ nested declaration scope and persistent index reload. All five failed before
 implementation; the complete local suite passed 227 tests afterward, along with
 lint and formatting. The index cache version was advanced to rebuild old entries.
 
-These nodes identify declared source origins. They do not evaluate expressions,
-prove the current value of a mutable default, or traverse upstream dependencies
-of a default expression. Those distinctions remain visible in the graph evidence.
+These nodes identify declared source origins. They do not evaluate expressions
+or prove the current value of a mutable default. The follow-up below extends
+their upstream dependency traversal.
+
+Default-dependency follow-up: backflow now traverses known bindings in the
+default expression's declaration scope. Module assignments and enclosing
+function parameters/local assignments are included, without confusing a caller's
+same-named variable with the declaration binding. Repeated calls share one
+default-expression dependency. Two new cases failed before implementation;
+an additional assertion exposed missing multiline expression parsing and now
+passes, including persistent index reload. Expression parsing restores grouping
+around source fragments without evaluating them. The graph remains
+path-insensitive: assignment order, imported/free-variable dependencies and
+runtime mutations are not proven.
 
 The [native default-origin run](https://github.com/skanga/banger/actions/runs/34703759760)
 at commit `0a381653a1fb1214e177e2ff6e9fa257cf3599d7` passed all six
