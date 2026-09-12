@@ -389,6 +389,11 @@ All 316 local tests passed, with lint and formatting clear. Escapes, namespaces
 and unflagged HTML attribute-specific case rules remain outside this subset;
 unflagged values retain the prior case-sensitive approximation.
 
+The [native attribute-selector run](https://github.com/skanga/banger/actions/runs/34712409898)
+at commit `b2c2fc1794713c990a08ebdbe363ca76c835beb1` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## Dynamic Python markup templates
 
 F-strings are now extracted as whole template skeletons rather than walking their
