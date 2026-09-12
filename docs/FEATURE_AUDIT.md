@@ -4,7 +4,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 | Requirement | Current evidence | Remaining limits or verification |
 |---|---|---|
-| Python + uv application in the current directory | Wheel installed into an isolated environment; launcher and live coding task passed using site-packages | Native Windows verification only |
+| Python + uv application in the current directory | Isolated Windows wheel installation and live coding task; native CI tests/builds on all three platforms | Installed-wheel live task was Windows only |
 | Independent implementation; mini-swe-agent optional | Banger source imports no Benzi/mini-swe-agent modules | No proprietary implementation available for differential comparison |
 | Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py | Exported SVG exists; browser unavailable for visual inspection |
 | Chat, source, diffs, tools, sessions, interrupt, mouse | Textual widgets and interaction tests | More terminal-size and cancellation UI checks desirable |
@@ -16,13 +16,13 @@ This audit preserves the user's target: an independent terminal coding agent wit
 | Syntax and semantic write gates | test_edits.py, test_batch_edits.py; combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
 | Impact and relevant tests | Matching before/after edit reports with callers, value consumers, and relevant tests; persisted by snapshot ID | Test selection can miss dynamically invoked tests; reports do not execute tests |
 | Runtime tracing and static overlay | test_tracing.py; hash-validated runtime profile edges | Python only; traces are bounded and large/custom values are summarized |
-| Generated reproductions and local execution | test_end_to_end.py, test_execution.py | Native cmd verified; native Linux/macOS bash still unverified |
+| Generated reproductions and local execution | test_end_to_end.py, test_execution.py; native cmd and Linux/macOS bash checks passed in CI | Commands run on the host; no container isolation |
 | Undo and restart recovery | test_edits.py, test_state.py, test_batch_edits.py; grouped undo and incomplete-operation classification | Arbitrary shell changes are not captured by edit snapshots; multi-file writes are not filesystem-wide atomic |
 | Persistent conversations, memory, index, trace, undo | StateStore, restart tests, context tests | Context excerpts are not a lossless in-context summary; exact history stays available on disk |
 | Anthropic/OpenAI-compatible/local model interfaces | Mocked provider tests plus live OpenAI-compatible streaming/tool execution with gpt-5.3-codex-spark | Anthropic live endpoint unverified; local models must support tool calling |
 | Escalation confirmation | test_agent.py, test_permissions.py | Stronger model is configured for the same provider/endpoint |
 | Selectable familiar permission modes | Policy tests, TUI approval/mode-switch tests | Local execution has no filesystem/network sandbox |
-| Windows/Linux/macOS with cmd/bash | Platform-specific executor and cross-platform workflow | Windows tested here; other native runners not yet run |
+| Windows/Linux/macOS with cmd/bash | Six native CI jobs passed on Python 3.11 and 3.13; shell, process, tracing and headless TUI tests included | Hosted runner images do not cover every terminal, OS release or architecture |
 | Containers | Explicitly deferred by user | Later version |
 | No headless agent/API/benchmark requirement | Only interactive application launcher | Internal Python modules exist for implementation/testing |
 
@@ -30,7 +30,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 1. Full local Windows suite passed: 160 tests; grouped-edit and shutdown-race verification are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
-3. Run the native Linux/macOS workflow; do not claim those results before they exist.
+3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
 5. Continue strengthening language and markup analysis where the current evidence is narrower than Benzi's described capability.
 
@@ -225,4 +225,17 @@ to update a widget after Textual removed it. A deterministic local regression
 reproduced the failure. Agent events and worker cleanup now skip UI updates once
 the app stops running. A second test verifies that closing during a model request
 cancels the worker, closes HTTP resources, and preserves the saved conversation.
-The corrected commit requires a fresh native CI run.
+The [corrected run](https://github.com/skanga/banger/actions/runs/34664040928),
+at commit `ffb456ec5f040032d63f9232ede5a35705d1105e`, passed all six jobs:
+
+| OS | Python | Tests | Lint, formatting, wheel and source build |
+|---|---|---|---|
+| Windows | 3.11 | 160 passed | Passed |
+| Windows | 3.13 | 160 passed | Passed |
+| Linux | 3.11 | 160 passed | Passed |
+| Linux | 3.13 | 160 passed | Passed |
+| macOS | 3.11 | 160 passed | Passed |
+| macOS | 3.13 | 160 passed | Passed |
+
+These are native hosted-runner checks, including real cmd/bash execution and
+Python tracing. TUI tests remain headless, and provider requests in CI are mocked.
