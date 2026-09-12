@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 363 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 378 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,25 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Local CSS imports
+
+Markup analysis expands unconditional relative local `@import` rules in source
+order, including quoted and `url(...)` forms, `all`, percent-encoded paths,
+query/fragment suffixes, nested imports and Python-embedded styles. Imported
+declarations preserve their CSS file and line. Refresh reloads changed imports.
+Repeated imports retain their cascade position; ancestor cycles are reported.
+This follows the applicable [CSS import rules](https://www.w3.org/TR/css-cascade-5/#at-import).
+
+Fifteen cases in `test_markup_imports.py` cover cascade precedence, nested path
+resolution, source provenance, refresh, cycles, unsupported/unavailable imports,
+embedded styles and depth limits. Five initial cases failed before the change;
+six negative cases already passed, and four further URL/provenance/limit cases
+were added. Imports read only discovered workspace files. Remote URLs, unknown
+root-relative URLs, CSS-escaped URLs, conditional or layered imports and imports
+after ordinary rules remain explicit unresolved results. Expansion stops at
+32 active stylesheet levels or 1,000 imported sheets per document; limits are
+reported rather than silently treated as complete style analysis.
 
 ## Retrieval after context compaction
 

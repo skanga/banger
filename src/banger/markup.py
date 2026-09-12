@@ -8,6 +8,7 @@ from pathlib import Path
 from tree_sitter_language_pack import get_parser
 
 from banger.css_attributes import ATTRIBUTE, attribute_matches
+from banger.css_imports import import_path
 from banger.css_variables import CSSVariables
 from banger.discovery import discover_files
 from banger.index import text
@@ -140,6 +141,7 @@ class MarkupIndex:
         self.previous_siblings = {}
         self.unresolved = []
         visible_files = set(discover_files(self.root))
+        self._visible_files = visible_files
         for path in sorted(visible_files):
             if path.suffix not in {".html", ".htm", ".py", ".js", ".ts", ".jsx", ".tsx"}:
                 continue
@@ -178,11 +180,12 @@ class MarkupIndex:
                 )
         for identity, document in self.documents.items():
             self.rules[identity] = []
+            self._imports_remaining = 1000
             for kind, value, line, source_lines in document.resources:
                 if kind == "inline":
                     css, source = value, document.path
                 else:
-                    target = (self.root / document.path).parent / value.split("?", 1)[0]
+                    target = ((self.root / document.path).parent / value.split("?", 1)[0]).resolve()
                     if target.resolve() not in visible_files or not target.is_file():
                         self.rules[identity].append(
                             {"unresolved": "Unavailable stylesheet " + value}
@@ -225,7 +228,21 @@ class MarkupIndex:
                 )
         return declarations
 
-    def _css(self, source, path, line, source_lines=None):
+    def _import_css(self, statement, path, ancestry):
+        target = ((self.root / path).parent / import_path(statement)).resolve()
+        if target not in self._visible_files or not target.is_file():
+            raise ValueError("Unavailable imported stylesheet")
+        relative = target.relative_to(self.root).as_posix()
+        if relative in ancestry:
+            raise ValueError("CSS import cycle")
+        if len(ancestry) >= 32 or self._imports_remaining <= 0:
+            raise ValueError("CSS import expansion limit reached")
+        self._imports_remaining -= 1
+        return self._css(
+            target.read_text(encoding="utf-8"), relative, 1, ancestry=(*ancestry, relative)
+        )
+
+    def _css(self, source, path, line, source_lines=None, ancestry=None):
         tree = get_parser("css").parse(source.encode())
         byte_lines = (
             [origin for char, origin in zip(source, source_lines) for _ in char.encode("utf-8")]
@@ -233,7 +250,30 @@ class MarkupIndex:
             else None
         )
         rules = []
+        imports_allowed = True
+        ancestry = ancestry or (path,)
         for node in tree.root_node.named_children:
+            if node.type == "import_statement":
+                try:
+                    if not imports_allowed:
+                        raise ValueError("CSS import appears after other rules")
+                    rules.extend(self._import_css(text(node), path, ancestry))
+                except (ValueError, OSError) as exc:
+                    rules.append(
+                        {
+                            "unresolved": text(node),
+                            "reason": str(exc),
+                            "path": path,
+                            "line": byte_lines[node.start_byte]
+                            if byte_lines
+                            else line + node.start_point.row,
+                        }
+                    )
+                continue
+            if node.type not in {"comment", "charset_statement"} and not re.fullmatch(
+                r"@layer\s+[^{};]+;", text(node), re.IGNORECASE
+            ):
+                imports_allowed = False
             if node.type != "rule_set":
                 if node.type != "comment":
                     rules.append(
