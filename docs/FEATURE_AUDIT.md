@@ -28,11 +28,22 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 322 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 335 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
 5. Continue strengthening language and markup analysis where the current evidence is narrower than Benzi's described capability.
+
+## Model response validation
+
+`tests/test_agent_recovery.py` covers malformed response roles/content, call lists,
+function structures/names, argument types/JSON and duplicate or invalid IDs.
+A malformed later call rejects the response before an earlier write executes or
+the assistant message is persisted; a subsequent request can proceed. Explicit
+null tool-call lists finish and resume as ordinary assistant messages. Eleven
+new regression cases failed before the fix; two JSON-boundary cases were added
+afterward. This validates response structures, not transactionality across valid
+calls: later tool execution or approval failures can follow earlier effects.
 
 ## Live installed-package check, 2026-09-11
 

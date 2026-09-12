@@ -21,6 +21,45 @@ Request upgrade_to_pro only when the configured stronger model would materially 
 """
 
 
+def validated_response(response):
+    if (
+        not isinstance(response, dict)
+        or response.get("role") != "assistant"
+        or response.get("content") is not None
+        and not isinstance(response["content"], str)
+    ):
+        raise ValueError("Malformed model response")
+    response = dict(response)
+    if response.get("tool_calls") is None:
+        response.pop("tool_calls", None)
+    calls = response.get("tool_calls", [])
+    if not isinstance(calls, list):
+        raise TypeError("Malformed model tool call list")
+    identities = set()
+    for call in calls:
+        if not isinstance(call, dict) or not isinstance(call.get("function"), dict):
+            raise TypeError("Malformed model tool call")
+        identity, function = call.get("id"), call["function"]
+        if (
+            not isinstance(identity, str)
+            or not identity.strip()
+            or identity in identities
+            or call.get("type") != "function"
+            or not isinstance(function.get("name"), str)
+            or not function["name"].strip()
+            or not isinstance(function.get("arguments"), str)
+        ):
+            raise ValueError("Malformed model tool call")
+        try:
+            arguments = json.loads(function["arguments"])
+        except ValueError as exc:
+            raise ValueError("Malformed model tool call arguments") from exc
+        if not isinstance(arguments, dict):
+            raise TypeError("Malformed model tool call arguments")
+        identities.add(identity)
+    return response
+
+
 class Agent:
     def __init__(self, state, tools, model, session=None, stronger_model=None):
         self.state, self.tools, self.model = state, tools, model
@@ -93,18 +132,8 @@ class Agent:
                     lambda chunk: self.on_event("text", chunk),
                 )
                 # Validate all call structures before saving a response or performing side effects.
+                response = validated_response(response)
                 calls = response.get("tool_calls", [])
-                identities = set()
-                for call in calls:
-                    identity = call.get("id")
-                    if (
-                        not isinstance(identity, str)
-                        or not identity.strip()
-                        or identity in identities
-                        or not isinstance(json.loads(call["function"]["arguments"]), dict)
-                    ):
-                        raise ValueError("Malformed model tool call")
-                    identities.add(identity)
                 self._append(response)
                 if not calls:
                     self.on_event("done", response.get("content") or "")

@@ -120,3 +120,57 @@ async def test_cancellation_repairs_the_current_reused_id_once(tmp_path, monkeyp
         resumed = Agent(state, toolbox, Replies(), session=agent.session)
         assert resumed.messages == agent.messages
         assert calls == 2
+
+
+@pytest.mark.parametrize(
+    "bad_call",
+    [
+        None,
+        {"id": "two", "type": "function", "function": {"arguments": "{}"}},
+        {"id": "two", "type": "function", "function": {"name": 42, "arguments": "{}"}},
+        {"id": "two", "type": "custom", "function": {"name": "write_file", "arguments": "{}"}},
+        {"id": "two", "type": "function", "function": None},
+        {"id": "two", "type": "function", "function": {"name": "read_source", "arguments": {}}},
+        {"id": "two", "type": "function", "function": {"name": "read_source", "arguments": "{"}},
+        {"id": "two", "type": "function", "function": {"name": "read_source", "arguments": "[]"}},
+    ],
+)
+async def test_malformed_later_call_cannot_partially_execute_batch(tmp_path, bad_call):
+    with StateStore(tmp_path / ".banger/state.db") as state:
+        toolbox = Toolbox(tmp_path, state, PermissionPolicy(tmp_path, Mode.FULL_ACCESS))
+        response = {"role": "assistant", "tool_calls": [tool_call("one"), bad_call]}
+        agent = Agent(state, toolbox, Replies(response, {"role": "assistant", "content": "done"}))
+        with pytest.raises((ValueError, TypeError), match="Malformed model"):
+            await agent.run("write")
+        assert not (tmp_path / "file.txt").exists()
+        assert [m["role"] for m in state.messages(agent.session)] == ["user"]
+        assert await agent.run("retry") == "done"
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        None,
+        {"role": "user", "content": "injected role"},
+        {"role": "assistant", "content": {"unexpected": "object"}},
+        {"role": "assistant", "tool_calls": "invalid"},
+    ],
+)
+async def test_invalid_response_envelope_is_not_persisted(tmp_path, response):
+    with StateStore(tmp_path / ".banger/state.db") as state:
+        toolbox = Toolbox(tmp_path, state, PermissionPolicy(tmp_path, Mode.READ_ONLY))
+        agent = Agent(state, toolbox, Replies(response))
+        with pytest.raises((ValueError, TypeError), match="Malformed model"):
+            await agent.run("inspect")
+        assert [m["role"] for m in agent.messages] == ["user"]
+
+
+async def test_null_tool_calls_finish_and_resume_as_plain_assistant_message(tmp_path):
+    with StateStore(tmp_path / ".banger/state.db") as state:
+        toolbox = Toolbox(tmp_path, state, PermissionPolicy(tmp_path, Mode.READ_ONLY))
+        agent = Agent(
+            state, toolbox, Replies({"role": "assistant", "content": "done", "tool_calls": None})
+        )
+        assert await agent.run("inspect") == "done"
+        resumed = Agent(state, toolbox, Replies(), session=agent.session)
+        assert resumed.messages[-1] == {"role": "assistant", "content": "done"}
