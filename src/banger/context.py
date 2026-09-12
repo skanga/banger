@@ -12,17 +12,27 @@ class ContextWindow:
         if len(json.dumps(history)) <= self.max_chars:
             return history
         compact = copy.deepcopy(history)
+        latest = next(
+            (i for i in range(len(compact) - 1, -1, -1) if compact[i]["role"] != "tool"),
+            0,
+        )
         # Keep calls/results intact as protocol objects; only shorten older result bodies.
         for index, message in enumerate(compact):
-            if message["role"] == "tool" and len(message["content"]) > 1500:
-                message["content"] = json.dumps(
-                    {
-                        "excerpt": message["content"][:1000],
-                        "truncated": True,
-                        "history_index": index,
-                        "retrieve_with": "read_history",
-                    }
-                )
+            if index < latest and message["role"] == "tool" and len(message["content"]) > 1500:
+                excerpt = {
+                    "excerpt": message["content"][:1000],
+                    "truncated": True,
+                    "history_index": index,
+                    "retrieve_with": "read_history",
+                }
+                try:
+                    output = json.loads(message["content"])
+                except ValueError:
+                    output = None
+                artifact = output.get("saved_artifact") if isinstance(output, dict) else None
+                if isinstance(artifact, str) and artifact:
+                    excerpt.update(saved_artifact=artifact, retrieve_with="read_tool_output")
+                message["content"] = json.dumps(excerpt)
         if len(json.dumps(compact)) <= self.max_chars:
             return compact
         notice = (

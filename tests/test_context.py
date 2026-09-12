@@ -105,3 +105,74 @@ def test_oversized_latest_message_is_rejected_without_changing_history(tmp_path)
         with pytest.raises(ValueError, match="context limit"):
             ContextWindow(state, session, max_chars=10000).prepare(history)
         assert state.messages(session) == history
+
+
+@pytest.mark.parametrize("count", [1, 2])
+def test_latest_tool_result_is_delivered_intact_after_compaction(tmp_path, count):
+    with StateStore(tmp_path / "state.db") as state:
+        session = state.new_session("latest output")
+        result = {"role": "tool", "tool_call_id": "read", "content": "x" * 3000 + "NEEDED"}
+        call = {
+            "role": "assistant",
+            "tool_calls": [
+                {
+                    "id": "read",
+                    "type": "function",
+                    "function": {"name": "read_file", "arguments": "{}"},
+                }
+            ],
+        }
+        call["tool_calls"] = [dict(call["tool_calls"][0], id=f"read{i}") for i in range(count)]
+        results = [dict(result, tool_call_id=f"read{i}") for i in range(count)]
+        history = [{"role": "user", "content": "old " * 4000}, call, *results]
+        compacted = ContextWindow(state, session, max_chars=10000).prepare(history)
+        assert compacted[-count - 1 :] == [call, *results]
+        assert len(json.dumps(compacted)) <= 10000
+
+
+async def test_compacted_artifact_can_be_retrieved_after_restart(tmp_path):
+    from banger.permissions import Mode, PermissionPolicy
+    from banger.tools import Toolbox
+
+    database = tmp_path / ".banger/state.db"
+    output = {"value": "x" * 61000 + "NEEDED"}
+    with StateStore(database) as state:
+        session = state.new_session("saved output")
+        state.put_artifact("tool-output", "durable", output)
+        history = [
+            {"role": "user", "content": "inspect"},
+            {
+                "role": "assistant",
+                "tool_calls": [
+                    {
+                        "id": "read",
+                        "type": "function",
+                        "function": {"name": "read_file", "arguments": "{}"},
+                    }
+                ],
+            },
+            {
+                "role": "tool",
+                "tool_call_id": "read",
+                "content": json.dumps(
+                    {"preview": "x" * 58000, "truncated": True, "saved_artifact": "durable"}
+                ),
+            },
+            {"role": "user", "content": "recover the tail"},
+        ]
+        for message in history:
+            state.append(session, message)
+    with StateStore(database) as state:
+        compacted = ContextWindow(state, session, max_chars=10000).prepare(state.messages(session))
+        excerpt = json.loads(next(m["content"] for m in compacted if m["role"] == "tool"))
+        assert excerpt["saved_artifact"] == "durable"
+        assert excerpt["retrieve_with"] == "read_tool_output"
+        toolbox = Toolbox(tmp_path, state, PermissionPolicy(tmp_path, Mode.READ_ONLY))
+        toolbox.session = session
+        recovered = await toolbox.invoke(
+            "read_tool_output",
+            {"artifact": excerpt["saved_artifact"], "start": 61000, "length": 1000},
+        )
+        assert recovered["content"] == json.dumps(output, ensure_ascii=False)[61000:62000]
+        assert "NEEDED" in recovered["content"]
+        assert state.messages(session) == history
