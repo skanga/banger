@@ -58,6 +58,41 @@ Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
 
+## Live installed-wheel CSS task, 2026-09-12
+
+The wheel built from application commit
+`036eca9515f3d8bb090d98fc9110e00095193d54` was installed into the existing
+isolated Windows package-check environment. The harness asserted that Banger
+loaded from `site-packages`. Wheel SHA-256:
+`a1477feadfe9f103975735a8c48323606dee63b85f4ecc59337866e63e999465`.
+
+Using streaming OpenAI-compatible `gpt-5.3-codex-spark` at the user's local
+`http://127.0.0.1:10531/v1` endpoint without a key, the agent inspected an HTML
+notice and its imported CSS. It changed the original color declaration in
+`palette.css` from red to green, retained padding 4px and background white,
+and verified those values with markup tools. The harness separately checked
+the resulting style values and provenance, and that `page.html` and `site.css`
+were unchanged. No overriding rule was added.
+
+After closing and reopening SQLite, the harness verified exact conversation
+recovery. A second live model request correctly summarized the changed file
+and verified color from the saved session. Persisted rollback then restored
+the original palette with one undo operation.
+
+The edit task used accept-edits mode; the live follow-up used read-only mode.
+No shell tool or stronger model was used. The model initially supplied an
+incorrect element ID and copied a displayed line-number prefix into an edit;
+the element lookup and syntax gate rejected those calls. It recovered and
+finished successfully. This is one completed live coding task, not evidence
+of error-free autonomous behavior or a live TUI interaction. Anthropic remains
+covered by mocked provider tests.
+
+Local evidence: `.banger/live-css-b48f4aaf/result.json`, its `.banger/state.db`,
+and `.banger/live_css_acceptance.py`. The fixture's palette is restored to its
+original red value after the undo check; the verified green styles and edited
+content remain recorded in the result JSON. The same application commit had
+already passed 378 local tests and all six native CI jobs recorded below.
+
 ## Local CSS imports
 
 Markup analysis expands unconditional relative local `@import` rules in source
