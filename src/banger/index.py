@@ -721,41 +721,57 @@ class CodeIndex:
         identity = self.get_definition(symbol)["id"]
         return [c for c in self.calls if identity in c["targets"]]
 
+    def _resolved_adjacency(self, reverse=False):
+        adjacency = {}
+        for call in self.calls:
+            if call["resolution"] == "resolved":
+                for target in call["targets"]:
+                    key = target if reverse else call["caller"]
+                    adjacency.setdefault(key, []).append((call, target))
+        return adjacency
+
     def call_tree(self, symbol: str, reverse: bool = False) -> dict:
         identity = self.get_definition(symbol)["id"]
+        adjacency = self._resolved_adjacency(reverse)
         seen, queue, edges = {identity}, deque([identity]), []
         while queue:
             current = queue.popleft()
-            for call in self.calls:
-                if call["resolution"] != "resolved":
-                    continue
-                for target in call["targets"]:
-                    source = call["caller"]
-                    if (target if reverse else source) != current:
-                        continue
-                    edges.append({"source": source, "target": target, "line": call["line"]})
-                    following = source if reverse else target
-                    if following and following not in seen:
-                        seen.add(following)
-                        queue.append(following)
+            for call, target in adjacency.get(current, []):
+                source = call["caller"]
+                edges.append({"source": source, "target": target, "line": call["line"]})
+                following = source if reverse else target
+                if following and following not in seen:
+                    seen.add(following)
+                    queue.append(following)
         return {"nodes": sorted(seen), "edges": edges, "includes": "resolved edges only"}
 
     def trace_path(self, source: str, target: str) -> list[str]:
         source, target = self.get_definition(source)["id"], self.get_definition(target)["id"]
-        edges = self.call_tree(source)["edges"]
-        queue, seen = deque([[source]]), {source}
+        adjacency = self._resolved_adjacency()
+        queue, previous = deque([source]), {source: None}
         while queue:
-            path = queue.popleft()
-            if path[-1] == target:
-                return path
-            for edge in edges:
-                if edge["source"] == path[-1] and edge["target"] not in seen:
-                    seen.add(edge["target"])
-                    queue.append(path + [edge["target"]])
+            current = queue.popleft()
+            if current == target:
+                path = []
+                while current is not None:
+                    path.append(current)
+                    current = previous[current]
+                return path[::-1]
+            for _, following in adjacency.get(current, []):
+                if following not in previous:
+                    previous[following] = current
+                    queue.append(following)
         return []
 
     def trace_path_details(self, source: str, target: str) -> dict:
         path = self.trace_path(source, target)
+        calls_by_step = {step: [] for step in pairwise(path)}
+        for call in self.calls:
+            if call["resolution"] == "resolved":
+                for callee in call["targets"]:
+                    step = (call["caller"], callee)
+                    if step in calls_by_step:
+                        calls_by_step[step].append(call)
         steps = []
         for caller, callee in pairwise(path):
             sites = [
@@ -768,10 +784,7 @@ class CodeIndex:
                     "resolution": call["resolution"],
                     "evidence": call["evidence"],
                 }
-                for call in self.calls
-                if call["caller"] == caller
-                and call["resolution"] == "resolved"
-                and callee in call["targets"]
+                for call in calls_by_step[(caller, callee)]
             ]
             steps.append(
                 {

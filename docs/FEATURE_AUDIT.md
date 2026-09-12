@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 253 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 257 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,24 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## Call-query traversal scaling
+
+Call-tree and shortest-path queries group resolved calls into adjacency lists
+once per traversal. Path reconstruction uses predecessor links rather than copying
+the accumulated path at each step. Detailed paths collect call sites by step in
+one pass. This preserves full resolved closures, source order and per-site evidence;
+it does not introduce a call-tree truncation limit or promote ambiguous edges.
+
+On an indexed 200-function chain, forward/reverse trees dropped from 39,800 call
+record visits each to 199; detailed paths dropped from 79,401 to 398. Observed
+local timings were approximately 4.3 ms to 0.11 ms for trees and 8.5 ms to 0.27 ms
+for detailed paths. Tests assert bounded record visits rather than machine-specific
+timing thresholds. Three scaling cases failed before the change; a fourth checks
+shortest branches, cycles and module-level sites. Existing path tests retain
+duplicate-site, argument and return-holder evidence. All 257 local tests passed,
+along with lint and formatting checks. These measurements isolate queries after
+indexing and do not establish end-to-end performance on every repository.
 
 ## Dependency graph node limits
 
