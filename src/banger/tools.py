@@ -10,9 +10,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from banger.analysis import FlowAnalysis
+from banger.discovery import EXCLUDED
 from banger.edits import Editor
 from banger.execution import Executor
-from banger.index import EXCLUDED, CodeIndex
+from banger.index import CodeIndex
 from banger.markup import MarkupIndex
 from banger.permissions import Action, Decision
 from banger.tracing import trace_file

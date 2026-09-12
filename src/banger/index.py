@@ -3,7 +3,6 @@
 import ast
 import hashlib
 import inspect
-import os
 import re
 from collections import deque
 from itertools import pairwise
@@ -14,6 +13,7 @@ from tree_sitter_language_pack import get_parser
 from banger.bindings import extract_bindings, resolve_binding
 from banger.cpp_hierarchy import declaration_scope as cpp_declaration_scope
 from banger.cpp_hierarchy import type_bindings as cpp_type_bindings
+from banger.discovery import discover_files
 from banger.hierarchy import base_links, csharp_namespace, declared_bases
 from banger.outline import source_outline
 from banger.receivers import ReceiverBindings
@@ -39,19 +39,6 @@ LANGUAGES = {
     ".html": "html",
     ".htm": "html",
     ".css": "css",
-}
-EXCLUDED = {
-    ".git",
-    ".venv",
-    "venv",
-    "node_modules",
-    "__pycache__",
-    ".banger",
-    "target",
-    "dist",
-    "build",
-    ".pytest_cache",
-    ".ruff_cache",
 }
 DEFINITIONS = {
     "function_definition",
@@ -150,29 +137,24 @@ class CodeIndex:
             self.go_module = match.group(1).strip('"') if match else ""
         found = set()
         changed = 0
-        for directory, dirs, files in os.walk(self.root, followlinks=False):
-            dirs[:] = [
-                d for d in dirs if d not in EXCLUDED and not (Path(directory) / d).is_symlink()
-            ]
-            for filename in sorted(files):
-                path = Path(directory) / filename
-                if path.suffix.lower() not in LANGUAGES or path.is_symlink():
-                    continue
-                relative = path.relative_to(self.root).as_posix()
-                found.add(relative)
-                try:
-                    data = path.read_bytes()
-                    digest = hashlib.sha256(data).hexdigest()
-                    if self.files.get(relative, {}).get("digest") != digest:
-                        self.files[relative] = self._parse(relative, data, digest)
-                        changed += 1
-                except OSError as exc:
-                    self.files[relative] = {
-                        "symbols": [],
-                        "calls": [],
-                        "imports": {},
-                        "error": str(exc),
-                    }
+        for path in discover_files(self.root):
+            if path.suffix.lower() not in LANGUAGES:
+                continue
+            relative = path.relative_to(self.root).as_posix()
+            found.add(relative)
+            try:
+                data = path.read_bytes()
+                digest = hashlib.sha256(data).hexdigest()
+                if self.files.get(relative, {}).get("digest") != digest:
+                    self.files[relative] = self._parse(relative, data, digest)
+                    changed += 1
+            except OSError as exc:
+                self.files[relative] = {
+                    "symbols": [],
+                    "calls": [],
+                    "imports": {},
+                    "error": str(exc),
+                }
         self.files = {p: f for p, f in self.files.items() if p in found}
         self.symbols = {s["id"]: s for f in self.files.values() for s in f["symbols"]}
         self.calls = [dict(c) for f in self.files.values() for c in f["calls"]]

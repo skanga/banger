@@ -33,7 +33,7 @@ from textual.widgets import (
 from textual.worker import WorkerCancelled, WorkerFailed
 
 from banger.agent import Agent
-from banger.index import EXCLUDED
+from banger.discovery import EXCLUDED
 from banger.models import ModelClient, ModelConfig
 from banger.permissions import Mode, PermissionPolicy
 from banger.state import StateStore

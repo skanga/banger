@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 175 tests; grouped-edit, shutdown-race and C++ hierarchy verification are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 184 tests; grouped-edit, shutdown-race, C++ hierarchy and Git discovery verification are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -260,3 +260,26 @@ At commit `82cd2b774e9aba474504d65883a8e2f78babdcac`, the
 [native C++ follow-up run](https://github.com/skanga/banger/actions/runs/34664666044)
 passed 175 tests in each of the six Windows/Linux/macOS and Python 3.11/3.13 jobs.
 Lint, formatting, and wheel/source builds passed in every job as well.
+
+## Repository discovery follow-up
+
+Code and markup indexes share Git-aware discovery. The implementation uses
+`git ls-files -z --cached --others --exclude-standard`, preserving tracked source
+while honoring standard ignore rules for untracked files. Refresh drops newly
+ignored cached files and finds newly created source. Linked stylesheets must also
+belong to the discovered file set. Fixed dependency/state exclusions remain in
+effect. Submodules and nested repositories are not traversed automatically.
+
+Nine tests cover nested ignores, negation, tracked ignored files, Unicode/space
+filenames, ancestor rules, cache refresh, ignored markup/CSS/DOM references,
+non-Git folders, unavailable Git, inherited Git environment variables, filesystem
+monitor disabling, path boundaries, and ownership rejection. The five primary
+behavior tests failed before implementation. Git discovery has a timeout,
+disables filesystem-monitor hooks and optional locks, and does not override
+repository trust. Plain folders retain the fixed-exclusion filesystem scan.
+
+A read-only self-index check found 50 source files and 407 symbols with no syntax
+errors, and no files from the ignored reference checkouts. The check initially
+exposed mixed sandbox/user ownership of the Git metadata created during setup;
+the `.git` directory owner was corrected to the normal user without changing
+access rules or adding a global trust override.

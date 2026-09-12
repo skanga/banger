@@ -1,7 +1,6 @@
 """Document-scoped HTML, CSS and DOM reference analysis."""
 
 import ast
-import os
 import re
 from html.parser import HTMLParser
 from pathlib import Path
@@ -9,7 +8,8 @@ from pathlib import Path
 from tree_sitter_language_pack import get_parser
 
 from banger.css_variables import CSSVariables
-from banger.index import EXCLUDED, text
+from banger.discovery import discover_files
+from banger.index import text
 
 INHERITED = {
     "color",
@@ -103,55 +103,48 @@ class MarkupIndex:
     def refresh(self):
         self._style_cache = {}
         self.nodes, self.documents, self.rules, self.references = {}, {}, {}, []
-        for directory, dirs, files in os.walk(self.root):
-            dirs[:] = [
-                d for d in dirs if d not in EXCLUDED and not (Path(directory) / d).is_symlink()
-            ]
-            for filename in files:
-                path = Path(directory) / filename
-                if (
-                    path.suffix not in {".html", ".htm", ".py", ".js", ".ts", ".jsx", ".tsx"}
-                    or path.is_symlink()
-                ):
-                    continue
-                source = path.read_text(encoding="utf-8", errors="replace")
-                relative = path.relative_to(self.root).as_posix()
-                fragments = [(relative, source, 0)] if path.suffix in {".html", ".htm"} else []
-                if path.suffix == ".py":
-                    try:
-                        for node in ast.walk(ast.parse(source)):
-                            if (
-                                isinstance(node, ast.Constant)
-                                and isinstance(node.value, str)
-                                and re.search(r"<[a-zA-Z]", node.value)
-                            ):
-                                fragments.append(
-                                    (
-                                        f"{relative}:string:{node.lineno}",
-                                        node.value,
-                                        node.lineno - 1,
-                                    )
+        visible_files = set(discover_files(self.root))
+        for path in sorted(visible_files):
+            if path.suffix not in {".html", ".htm", ".py", ".js", ".ts", ".jsx", ".tsx"}:
+                continue
+            source = path.read_text(encoding="utf-8", errors="replace")
+            relative = path.relative_to(self.root).as_posix()
+            fragments = [(relative, source, 0)] if path.suffix in {".html", ".htm"} else []
+            if path.suffix == ".py":
+                try:
+                    for node in ast.walk(ast.parse(source)):
+                        if (
+                            isinstance(node, ast.Constant)
+                            and isinstance(node.value, str)
+                            and re.search(r"<[a-zA-Z]", node.value)
+                        ):
+                            fragments.append(
+                                (
+                                    f"{relative}:string:{node.lineno}",
+                                    node.value,
+                                    node.lineno - 1,
                                 )
-                    except SyntaxError:
-                        pass
-                for identity, fragment, offset in fragments:
-                    doc = Document(relative, identity, offset)
-                    doc.feed(fragment)
-                    self.documents[identity] = doc
-                    self.nodes.update({n["id"]: n for n in doc.nodes})
-                for match in re.finditer(
-                    r"""(?:querySelector(All)?|getElementById)\s*\(\s*(["'])(.*?)\2\s*\)""", source
-                ):
-                    selector = match.group(3)
-                    if match.group().startswith("getElementById"):
-                        selector = "#" + selector
-                    self.references.append(
-                        {
-                            "selector": selector,
-                            "path": relative,
-                            "line": source.count("\n", 0, match.start()) + 1,
-                        }
-                    )
+                            )
+                except SyntaxError:
+                    pass
+            for identity, fragment, offset in fragments:
+                doc = Document(relative, identity, offset)
+                doc.feed(fragment)
+                self.documents[identity] = doc
+                self.nodes.update({n["id"]: n for n in doc.nodes})
+            for match in re.finditer(
+                r"""(?:querySelector(All)?|getElementById)\s*\(\s*(["'])(.*?)\2\s*\)""", source
+            ):
+                selector = match.group(3)
+                if match.group().startswith("getElementById"):
+                    selector = "#" + selector
+                self.references.append(
+                    {
+                        "selector": selector,
+                        "path": relative,
+                        "line": source.count("\n", 0, match.start()) + 1,
+                    }
+                )
         for identity, document in self.documents.items():
             self.rules[identity] = []
             for kind, value, line in document.resources:
@@ -159,7 +152,7 @@ class MarkupIndex:
                     css, source = value, document.path
                 else:
                     target = (self.root / document.path).parent / value.split("?", 1)[0]
-                    if not target.resolve().is_relative_to(self.root) or not target.is_file():
+                    if target.resolve() not in visible_files or not target.is_file():
                         self.rules[identity].append(
                             {"unresolved": "Unavailable stylesheet " + value}
                         )

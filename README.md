@@ -60,6 +60,10 @@ Native Windows execution uses cmd, and Linux/macOS execution uses bash. Bash can
 
 Tree-sitter parses **Python, JavaScript, TypeScript, Java, C#, C++, C, Go, Rust, and Ruby**, plus HTML and CSS. The index caches parsed files by content hash and refreshes changed/deleted files before queries. Common build/dependency directories and symlinks are excluded.
 
+In Git workspaces, code and markup discovery uses [Git's tracked and untracked file listing](https://git-scm.com/docs/git-ls-files) with standard ignore rules. Nested ignore files and exceptions apply to untracked files; tracked files remain eligible outside Banger's fixed exclusions. Index refresh notices changed ignore rules. Ignored stylesheets are reported as unavailable. Submodules and nested repositories are not expanded automatically. Direct file reads and source browsing still allow explicit inspection under the selected permission mode.
+
+Git must be installed and able to read a Git workspace. Discovery errors, including ownership errors, are reported without bypassing Git's trust checks or falling back to scanning ignored files. Plain folders without a Git ancestor use the filesystem scan and fixed exclusions; standalone `.gitignore` files in those folders are not interpreted.
+
 Tools include definitions, symbol search, callers, call trees, paths between functions, hierarchy, source outlines, name references, external/unresolved calls, symbol profiles, relevant-test selection, and forward/backward data-flow queries. They distinguish resolved bindings, ambiguous candidates, external imports, and unknown calls. Python import scopes and signatures have dedicated handling; explicit import bindings also cover common JavaScript/TypeScript, Go, Rust, Java, and C# forms.
 
 C++ hierarchy queries preserve qualified base expressions and resolve preceding class definitions in the same file's namespace and class scopes. Cross-file include visibility, template expansion, aliases, and preprocessing remain unproven and are reported as candidates or unknowns. Local classes and shadowing namespaces are kept separate.
