@@ -385,6 +385,11 @@ in separate files, and return-holder source provenance. All 230 local tests pass
 along with lint and formatting checks. The graph remains path-insensitive and
 does not resolve imported variable aliases or prove runtime assignment order.
 
+The [native module-flow run](https://github.com/skanga/banger/actions/runs/34706772798)
+at commit `43360656246f7b6fc6d3fb2b677c5875831e1c58` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## Python flow argument binding
 
 Backflow call-site reports and graph edges now share signature-based Python
