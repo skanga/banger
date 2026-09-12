@@ -288,6 +288,8 @@ class BangerApp(App):
         self.query_one("#prompt", Input).focus()
 
     def _status(self, text):
+        if not self.is_running:
+            return
         prefix = (
             f"{self.agent.model.config.model} | {self.agent.tools.policy.mode.value} | "
             if self.agent
@@ -331,16 +333,18 @@ class BangerApp(App):
             raise
         except Exception as exc:  # noqa: BLE001 -- keep provider/tool failures inside the TUI
             self.clear_draft()
-            self.query_one("#chat-log", RichLog).write(
-                Text(f"Error: {type(exc).__name__}: {exc}", style="red")
-            )
-            self._status("Stopped with an error; session saved")
+            if self.is_running:
+                self.query_one("#chat-log", RichLog).write(
+                    Text(f"Error: {type(exc).__name__}: {exc}", style="red")
+                )
+                self._status("Stopped with an error; session saved")
         finally:
             await self.refresh_sessions()
 
     def clear_draft(self):
         self.draft = ""
-        self.query_one("#draft", Static).update("")
+        if self.is_running:
+            self.query_one("#draft", Static).update("")
 
     def clear_session_views(self):
         self.clear_draft()
@@ -354,6 +358,8 @@ class BangerApp(App):
             self.query_one("#diff-log", RichLog).write(Syntax(result["diff"], "diff"))
 
     def on_agent_event(self, event: AgentEvent):
+        if not self.is_running:
+            return
         if event.kind == "text":
             self.draft += event.payload
             self.query_one("#draft", Static).update(self.draft)
@@ -389,6 +395,8 @@ class BangerApp(App):
             self.notify(str(exc), severity="error")
 
     async def refresh_sessions(self):
+        if not self.is_running:
+            return
         rows = self.state.sessions()
         self.session_ids = [row["id"] for row in rows]
         listing = self.query_one("#sessions", ListView)

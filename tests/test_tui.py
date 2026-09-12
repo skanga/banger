@@ -6,6 +6,65 @@ from textual.widgets import Input, Label, ListView, RichLog, Select, TabbedConte
 
 from banger.app import AgentEvent, Approval, BangerApp, ModePicker
 from banger.permissions import Action
+from banger.state import StateStore
+
+
+async def test_shutdown_ignores_late_agent_updates(tmp_path, monkeypatch):
+    app = BangerApp(tmp_path)
+    close_all = app._close_all
+    checked = False
+
+    async def close_with_late_updates():
+        nonlocal checked
+        await close_all()
+        assert not app.is_running
+        # Reproduce a worker's already-queued messages arriving after widgets
+        # disappear, while the application's message pump is still draining.
+        for kind, payload in (
+            ("text", "late token"),
+            ("status", "late status"),
+            ("done", "late answer"),
+            ("tool_start", {"name": "write_file"}),
+            ("tool_result", {"name": "write_file", "result": {"diff": "late diff"}}),
+        ):
+            app.on_agent_event(AgentEvent(kind, payload))
+        app.clear_draft()
+        await app.refresh_sessions()
+        checked = True
+
+    monkeypatch.setattr(app, "_close_all", close_with_late_updates)
+    async with app.run_test(size=(120, 40)) as pilot:
+        await pilot.pause()
+    assert checked
+
+
+async def test_shutdown_cancels_model_worker_and_preserves_session(tmp_path):
+    app = BangerApp(tmp_path)
+    started = asyncio.Event()
+    cancelled = asyncio.Event()
+
+    async def generate(system, messages, tools, on_text):
+        on_text("Partial response")
+        started.set()
+        try:
+            await asyncio.Event().wait()
+        finally:
+            cancelled.set()
+
+    async with app.run_test(size=(120, 40)) as pilot:
+        app.screen.query_one("#model", Input).value = "fixture-model"
+        app.screen.query_one("#mode", Select).value = "ask"
+        await pilot.click("#start")
+        await pilot.pause()
+        app.client.generate = generate
+        session = app.agent.session
+        app.worker = app.run_worker(app._run("Inspect the project"), group="agent")
+        await asyncio.wait_for(started.wait(), timeout=2)
+    assert cancelled.is_set()
+    assert not app.agent.running
+    assert app.client.client.is_closed
+    with StateStore(tmp_path / ".banger/state.db") as state:
+        assert state.messages(session)[-1]["content"] == "Inspect the project"
 
 
 async def test_setup_requires_explicit_mode_and_can_open_workspace(tmp_path):

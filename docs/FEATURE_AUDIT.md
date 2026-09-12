@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full Windows suite passed: 158 tests; grouped-edit verification is included. Native CI results are recorded separately below when available.
+1. Full local Windows suite passed: 160 tests; grouped-edit and shutdown-race verification are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Run the native Linux/macOS workflow; do not claim those results before they exist.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -211,3 +211,18 @@ compensation can itself fail, leaving an incomplete group for inspection.
 A subsequent live adapter check with the same no-key local endpoint passed
 streamed tool calls, argument decoding, tool-result follow-up, and streamed text.
 This exercised the current source adapter; it did not rerun the entire coding task.
+
+## Native CI, 2026-09-12 UTC
+
+The user authorized creating `skanga/banger` for native CI. The private repository
+contains the Banger implementation, tests, documentation, and locked dependencies;
+the reference checkouts and local state are excluded.
+
+The [initial six-job run](https://github.com/skanga/banger/actions/runs/34663734524)
+passed all tests and package checks on Linux and macOS, using Python 3.11 and 3.13.
+Both Windows jobs exposed the same shutdown race: a queued agent message tried
+to update a widget after Textual removed it. A deterministic local regression
+reproduced the failure. Agent events and worker cleanup now skip UI updates once
+the app stops running. A second test verifies that closing during a model request
+cancels the worker, closes HTTP resources, and preserves the saved conversation.
+The corrected commit requires a fresh native CI run.
