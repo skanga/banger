@@ -107,14 +107,19 @@ class FlowAnalysis:
 
     def graph(self, symbol, value, reverse=False):
         nodes, edges = {}, []
+        module_names = {
+            path: {a["name"] for a in file.get("assignments", []) if a["scope"] is None}
+            for path, file in self.index.files.items()
+        }
 
-        def variable(scope, name):
-            identity = f"{scope}|value|{name}"
-            nodes[identity] = {"id": identity, "symbol": scope, "name": name}
+        def variable(scope, name, path=None):
+            path = self.index.symbols[scope]["path"] if scope else path
+            identity = f"{scope or 'module|' + path}|value|{name}"
+            nodes[identity] = {"id": identity, "symbol": scope, "name": name, "path": path}
             return identity
 
         def expression(scope, content, path, line):
-            identity = f"{scope}|expression|{line}|{content}"
+            identity = f"{scope or 'module|' + path}|expression|{line}|{content}"
             nodes[identity] = {
                 "id": identity,
                 "symbol": scope,
@@ -125,11 +130,13 @@ class FlowAnalysis:
             # Match only names already known as locals or parameters, avoiding calls/types/keywords.
             owner = self.index.symbols.get(scope, {})
             names = set(parameter_names(owner) + owner.get("bindings", []))
+            if scope is None:
+                names.update(module_names.get(path, set()))
             for name in re.findall(r"\b[A-Za-z_]\w*\b", content):
                 if name in names:
                     edges.append(
                         {
-                            "source": variable(scope, name),
+                            "source": variable(scope, name, path),
                             "target": identity,
                             "evidence": "syntactic expression dependency",
                         }
@@ -147,7 +154,9 @@ class FlowAnalysis:
                 edges.append(
                     {
                         "source": source,
-                        "target": variable(assignment["scope"], assignment["name"]),
+                        "target": variable(
+                            assignment["scope"], assignment["name"], assignment["path"]
+                        ),
                         "evidence": "assignment dependency",
                     }
                 )
@@ -158,7 +167,7 @@ class FlowAnalysis:
                 edges.append(
                     {
                         "source": source,
-                        "target": variable(returned["scope"], "$return"),
+                        "target": variable(returned["scope"], "$return", returned["path"]),
                         "evidence": "return dependency",
                     }
                 )
@@ -200,7 +209,7 @@ class FlowAnalysis:
                     edges.append(
                         {
                             "source": variable(target, "$return"),
-                            "target": variable(call["caller"], call["holder"]),
+                            "target": variable(call["caller"], call["holder"], call["path"]),
                             "evidence": call["resolution"],
                             "kind": "call return",
                         }

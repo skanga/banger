@@ -70,6 +70,8 @@ C++ hierarchy queries preserve qualified base expressions and resolve preceding 
 
 Data-flow queries follow syntactic dependencies through arguments, assignments, returns, and subsequent calls. They preserve ambiguous call candidates and are not path-sensitive runtime proofs. Relevant tests are selected through resolved call paths and test naming conventions; tests reached only by dynamic dispatch can be missed.
 
+Module-level assignments can connect return holders to subsequent call arguments. Module values and expressions are keyed by source file, so matching names or expressions in unrelated files remain separate. This does not resolve imported variable aliases or prove assignment order across branches.
+
 Python flow queries bind explicit arguments using indexed signatures, including positional-only, keyword-only and variadic parameters. Ordinary implicit-receiver calls retain their candidate resolution evidence. Omitted defaults include their declared expression, file, line and enclosing scope; this is source provenance, not the current value of a mutable default object. Dynamic splats and signatures hidden by decorators remain unresolved. Other languages currently use positional argument approximations.
 
 HTML queries include static markup embedded in Python string literals. CSS analysis covers linked document scope, specificity, source order, `!important`, inline styles, common inherited properties, and basic custom-property substitution. DOM queries locate literal `querySelector`, `querySelectorAll`, and `getElementById` selectors. Unsupported dynamic selectors, conditional rules, and missing stylesheets are reported rather than silently applied. This is not a browser layout engine.

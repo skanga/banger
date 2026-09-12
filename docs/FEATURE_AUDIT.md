@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 227 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 230 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,20 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## Module-level flow isolation
+
+Module values and expressions now include the source path in their graph identity.
+Previously, the absent enclosing symbol made same-named module values share a
+node, and equal expressions on the same line in separate files lost one source
+location. Expression dependencies now include names assigned within the current
+module, allowing return holders to flow through module assignments into calls.
+
+Three failing-before/passing-after Python regressions cover module assignment and
+call chains, unrelated files with matching variable names, identical expressions
+in separate files, and return-holder source provenance. All 230 local tests passed,
+along with lint and formatting checks. The graph remains path-insensitive and
+does not resolve imported variable aliases or prove runtime assignment order.
 
 ## Python flow argument binding
 
