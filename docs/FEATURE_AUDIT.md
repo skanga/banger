@@ -387,6 +387,11 @@ cases failed before the correction. All 276 local tests passed afterward, along
 with lint and formatting. Escaped or concatenated Python string contents still
 need an exact source map; these tests cover literal multiline source offsets.
 
+The [native markup-provenance run](https://github.com/skanga/banger/actions/runs/34708678702)
+at commit `8d6343c9a4146190d97659015304c9bd99cc7451` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## CSS sibling selectors
 
 Markup queries and cascade matching now support adjacent (`+`) and subsequent
