@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 195 tests; ten-language edit acceptance, compact-terminal interaction, grouped edits, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 202 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -318,3 +318,23 @@ The [corrected acceptance run](https://github.com/skanga/banger/actions/runs/346
 at commit `d2d23b446b9597f176e3c13a42625c6c4a0c1089` passed 195 tests in every
 Windows/Linux/macOS and Python 3.11/3.13 job. Lint, formatting, wheel and source
 distribution builds passed in all six jobs.
+
+## Semantic-gate regression follow-up
+
+Gate comparisons now identify callers by path and enclosing declaration scopes,
+and compare former targets with the candidates that survive the edit. Removing a
+resolved target is rejected even when an unrelated same-name candidate remains.
+Deleting an imported project module is also rejected when the unchanged import
+would otherwise be reclassified as external. Explicit switches to a different
+external import remain allowed; their runtime availability is not statically
+verified. Added ambiguity is not itself treated as proof of a break when the
+original declaration remains among the candidates.
+
+Python argument errors use scoped counts rather than one flag per short caller
+name. This prevents an existing error from suppressing additional bad calls or
+errors in a different same-named nested function. Seven tests cover target loss,
+module deletion, nested scopes, error counts, overload addition and explicit
+external-import replacement; five regression cases failed before their fixes.
+These comparisons are structural, not compiler proofs or complete source-diff
+matching. Changes that rename callers or exchange existing errors between call
+sites can still require runtime verification.

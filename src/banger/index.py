@@ -4,7 +4,7 @@ import ast
 import hashlib
 import inspect
 import re
-from collections import deque
+from collections import Counter, deque
 from itertools import pairwise
 from pathlib import Path
 
@@ -14,6 +14,7 @@ from banger.bindings import extract_bindings, resolve_binding
 from banger.cpp_hierarchy import declaration_scope as cpp_declaration_scope
 from banger.cpp_hierarchy import type_bindings as cpp_type_bindings
 from banger.discovery import discover_files
+from banger.gates import binding_regressions, call_key
 from banger.hierarchy import base_links, csharp_namespace, declared_bases
 from banger.outline import source_outline
 from banger.receivers import ReceiverBindings
@@ -638,20 +639,16 @@ class CodeIndex:
         candidate._build_hierarchies()
         candidate._resolve_calls()
 
-        def key(call, symbols):
-            return (call["path"], call["name"], symbols.get(call["caller"], {}).get("name"))
-
-        proven = {key(c, self.symbols) for c in self.calls if c["resolution"] == "resolved"}
-        regressions = [
-            c
-            for c in candidate.calls
-            if c["resolution"] == "unknown" and key(c, candidate.symbols) in proven
-        ]
-        previous_errors = {key(c, self.symbols) for c in self.calls if self._arity_error(c)}
+        regressions = binding_regressions(self, candidate)
+        previous_errors = Counter(call_key(c, self) for c in self.calls if self._arity_error(c))
         for call in candidate.calls:
             error = candidate._arity_error(call)
-            if error and key(call, candidate.symbols) not in previous_errors:
-                regressions.append({**call, "signature_error": error})
+            if error:
+                key = call_key(call, candidate)
+                if previous_errors[key]:
+                    previous_errors[key] -= 1
+                else:
+                    regressions.append({**call, "signature_error": error})
         return {
             "regressions": regressions,
             "unindexed_paths": outside,

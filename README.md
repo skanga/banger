@@ -76,6 +76,8 @@ HTML queries include static markup embedded in Python string literals. CSS analy
 
 Source changes use atomic replacement and durable before/after snapshots. Syntax errors reject the edit before writing. A semantic gate rejects known call bindings that become unresolved and newly invalid statically known Python call signatures. It is not a complete type checker. Edit results include diffs and caller impact so the model can select and run relevant tests.
 
+The gate distinguishes callers by their enclosing scopes. An unrelated same-name candidate cannot stand in for a removed target, and deleting an imported project module does not silently reclassify its unchanged import as an external dependency. Explicit import changes remain possible. Existing Python argument errors are counted per caller/call name so they do not mask additional bad calls.
+
 The `apply_edits` tool validates up to 100 files together, allowing coordinated changes such as updating a function signature and its callers. All required path approvals finish before the first write. Each file is replaced separately; this is not a filesystem-wide atomic transaction. A write failure attempts to restore the group's previous bytes while preserving conflicting external changes.
 
 Undo restores the previous bytes, including original newlines. It refuses to overwrite subsequent user changes. Pending snapshots are recovered after restart by comparing their before/after content with the current file. Generated reproductions and runtime traces are stored under `.banger/`.
