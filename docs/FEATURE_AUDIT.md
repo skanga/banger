@@ -77,6 +77,12 @@ after ordinary rules remain explicit unresolved results. Expansion stops at
 32 active stylesheet levels or 1,000 imported sheets per document; limits are
 reported rather than silently treated as complete style analysis.
 
+Verification: all 378 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`036eca9515f3d8bb090d98fc9110e00095193d54` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34724916650](https://github.com/skanga/banger/actions/runs/34724916650).
+
 ## Retrieval after context compaction
 
 Compaction preserves the latest assistant tool-call batch and all its results,
