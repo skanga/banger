@@ -50,6 +50,12 @@ assertions exposed and fixed HTTPX's broader line-splitting behavior. Existing
 tool-call round trips remain covered. This is payload framing for model requests,
 not a browser EventSource implementation with event-ID reconnection.
 
+Verification: 345 local Windows tests passed, with Ruff lint/format checks and
+wheel/source-distribution builds. Commit
+`451ea34ecef505879feb149b6dd9de3ac03e5fe3` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34715301254](https://github.com/skanga/banger/actions/runs/34715301254).
+
 ## Model response validation
 
 `tests/test_agent_recovery.py` covers malformed response roles/content, call lists,
