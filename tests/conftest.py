@@ -5,11 +5,13 @@ import pytest
 
 @pytest.fixture
 def click_ready():
-    """Click once after layout places the requested widget under its center point."""
+    """Click once after mounting and layout make the requested widget clickable."""
 
     async def click(pilot, selector):
-        widget = pilot.app.screen.query_one(selector)
         async with asyncio.timeout(5):
+            while not pilot.app.screen.query(selector):
+                await pilot.pause(0.01)
+            widget = pilot.app.screen.query_one(selector)
             while not (
                 widget.region.width > 0
                 and widget.region.height > 0
