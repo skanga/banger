@@ -70,6 +70,12 @@ retrieve the missing tail from the saved artifact and checks that durable
 history remains unchanged. The serialized budget still applies: an indivisible
 latest batch larger than that budget is rejected rather than silently shortened.
 
+Verification: all 363 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`286e0013c6a1f310962fa007177b5486a7e3a3c2` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34724298506](https://github.com/skanga/banger/actions/runs/34724298506).
+
 ## Serialized context limits
 
 Context compaction now retains a latest message or complete tool-call/result
