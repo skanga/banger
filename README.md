@@ -72,6 +72,8 @@ Data-flow queries follow syntactic dependencies through arguments, assignments, 
 
 Module-level assignments can connect return holders to subsequent call arguments. Module values and expressions are keyed by source file, so matching names or expressions in unrelated files remain separate. This does not resolve imported variable aliases or prove assignment order across branches.
 
+Python expression dependencies use AST reads, excluding string text, attribute labels, keyword labels and names bound within lambdas or comprehensions. Reads in f-strings, lambda defaults and comprehension iterables remain visible. Other languages currently retain lexical expression approximations.
+
 Python flow queries bind explicit arguments using indexed signatures, including positional-only, keyword-only and variadic parameters. Ordinary implicit-receiver calls retain their candidate resolution evidence. Omitted defaults include their declared expression, file, line and enclosing scope; this is source provenance, not the current value of a mutable default object. Dynamic splats and signatures hidden by decorators remain unresolved. Other languages currently use positional argument approximations.
 
 HTML queries include static markup embedded in Python string literals. CSS analysis covers linked document scope, specificity, source order, `!important`, inline styles, common inherited properties, and basic custom-property substitution. DOM queries locate literal `querySelector`, `querySelectorAll`, and `getElementById` selectors. Unsupported dynamic selectors, conditional rules, and missing stylesheets are reported rather than silently applied. This is not a browser layout engine.

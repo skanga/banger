@@ -4,6 +4,7 @@ import re
 from collections import deque
 
 from banger.arguments import bind_arguments, omitted_defaults, parameter_names
+from banger.expressions import python_reads
 
 
 class FlowAnalysis:
@@ -127,12 +128,17 @@ class FlowAnalysis:
                 "path": path,
                 "line": line,
             }
-            # Match only names already known as locals or parameters, avoiding calls/types/keywords.
+            # Limit reads to known bindings; other languages retain lexical approximation.
             owner = self.index.symbols.get(scope, {})
             names = set(parameter_names(owner) + owner.get("bindings", []))
             if scope is None:
                 names.update(module_names.get(path, set()))
-            for name in re.findall(r"\b[A-Za-z_]\w*\b", content):
+            reads = (
+                python_reads(content)
+                if path.endswith(".py")
+                else set(re.findall(r"\b[A-Za-z_]\w*\b", content))
+            )
+            for name in sorted(reads):
                 if name in names:
                     edges.append(
                         {

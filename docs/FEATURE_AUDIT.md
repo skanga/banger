@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 230 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 247 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,22 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## Python expression dependency verification
+
+Python flow expressions now use AST reads rather than matching words in source
+text. Strings, attribute names, keyword labels and lambda/comprehension bindings
+no longer create false dependencies on same-named outer variables. Lambda-local
+assignment expressions are also distinguished from captured values. F-string
+reads, lambda defaults and the outermost comprehension iterable retain their
+dependencies. No expressions are executed by this analysis.
+
+Seventeen cases cover these distinctions, nested lambdas, generator expressions
+and Unicode names. Eight cases reproduced false dependencies before correction;
+the others preserve real dependencies or verify related boundaries. The complete
+local suite passed 247 tests, plus lint and formatting. This remains syntactic,
+path-insensitive analysis, not proof that a closure executes or a branch runs.
+Other languages retain lexical expression approximations.
 
 ## Module-level flow isolation
 
