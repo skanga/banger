@@ -16,6 +16,9 @@ class Editor:
         for snapshot in state.pending_snapshots():
             if snapshot.get("batch"):
                 continue
+            if snapshot["status"] == "pending-rollback":
+                self._recover_rollback(snapshot)
+                continue
             path = Path(snapshot["path"])
             current = path.read_bytes() if path.exists() else None
             status = (
@@ -26,6 +29,18 @@ class Editor:
                 else "conflict"
             )
             state.finish_snapshot(snapshot["id"], status)
+
+    def _recover_rollback(self, snapshot):
+        path = Path(snapshot["path"])
+        current = path.read_bytes() if path.exists() else None
+        status = (
+            "rolled-back"
+            if current == snapshot["before"]
+            else "applied"
+            if current == snapshot["after"]
+            else "conflict"
+        )
+        self.state.finish_snapshot(snapshot["id"], status)
 
     def _path(self, path: str) -> Path:
         return (self.root / path).resolve()
@@ -140,7 +155,12 @@ class Editor:
         path = Path(snapshot["path"])
         if (path.read_bytes() if path.exists() else None) != snapshot["after"]:
             raise ValueError("File changed after the edit; rollback would overwrite newer work")
-        self._atomic(path, snapshot["before"])
+        self.state.finish_snapshot(snapshot["id"], "pending-rollback")
+        try:
+            self._atomic(path, snapshot["before"])
+        except Exception:
+            self._recover_rollback(snapshot)
+            raise
         self.state.finish_snapshot(snapshot["id"], "rolled-back")
         self.index.refresh()
         return {"restored": str(path), "snapshot": snapshot["id"]}

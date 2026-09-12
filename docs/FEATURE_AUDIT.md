@@ -17,7 +17,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 | Impact and relevant tests | Matching before/after edit reports with callers, value consumers, and relevant tests; persisted by snapshot ID | Test selection can miss dynamically invoked tests; reports do not execute tests |
 | Runtime tracing and static overlay | test_tracing.py; hash-validated runtime profile edges | Python only; traces are bounded and large/custom values are summarized |
 | Generated reproductions and local execution | test_end_to_end.py, test_execution.py; native cmd and Linux/macOS bash checks passed in CI | Commands run on the host; no container isolation |
-| Undo and restart recovery | test_edits.py, test_state.py, test_batch_edits.py; grouped undo and incomplete-operation classification | Arbitrary shell changes are not captured by edit snapshots; multi-file writes are not filesystem-wide atomic |
+| Undo and restart recovery | test_edits.py, test_state.py, test_batch_edits.py, test_undo_recovery.py; single/grouped undo and incomplete-operation classification | Arbitrary shell changes are not captured by edit snapshots; multi-file writes are not filesystem-wide atomic |
 | Persistent conversations, memory, index, trace, undo | StateStore, restart tests, context tests | Context excerpts are not a lossless in-context summary; exact history stays available on disk |
 | Anthropic/OpenAI-compatible/local model interfaces | Mocked provider tests plus live OpenAI-compatible streaming/tool execution with gpt-5.3-codex-spark | Anthropic live endpoint unverified; local models must support tool calling |
 | Escalation confirmation | test_agent.py, test_permissions.py | Stronger model is configured for the same provider/endpoint |
@@ -350,3 +350,18 @@ The [final semantic-gate run](https://github.com/skanga/banger/actions/runs/3467
 at commit `749835d7e698c1a315e2a7c8875620b86bc815bd` passed 202 tests in every
 Windows/Linux/macOS and Python 3.11/3.13 job. Lint, formatting, wheel and source
 builds passed in all six jobs.
+
+## Single-file undo recovery
+
+Single-file undo now commits a pending-rollback marker before restoring bytes.
+Restart recovery classifies a completed restoration as rolled-back, an untouched
+edit as applied and retryable, and unrelated bytes as a conflict. Recovery does
+not rewrite source files. Ordinary write exceptions use the same classification.
+This prevents a completed but interrupted undo from blocking older undo history.
+
+Nine cases cover interrupted undo of edits, creations and deletions, startup
+classification, write failures before/after restoration, conflict preservation,
+and retry. Six cases failed before the fix. The local full suite passed 211 tests;
+Ruff lint and formatting checks passed. Interruption is injected at the write
+boundary; these tests do not simulate power loss or provide filesystem-level
+compare-and-swap protection against concurrent writers.
