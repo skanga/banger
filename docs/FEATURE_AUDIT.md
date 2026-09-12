@@ -387,6 +387,11 @@ and formatting clear. Recovery reports uncertain action outcomes without retryin
 the action. Previously overwritten artifact contents cannot be reconstructed by
 this change; already malformed historical batches are not migrated.
 
+The [native repeated-ID recovery run](https://github.com/skanga/banger/actions/runs/34713023865)
+at commit `d799b6d341e2ba808ac5a33523955f7ff8f4bd08` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## CSS attribute operators and flags
 
 Attribute selectors now support `~=`, `|=`, `^=`, `$=` and `*=` alongside presence
