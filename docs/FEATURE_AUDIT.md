@@ -345,3 +345,8 @@ bounded helper that waits for the button's center to be visibly clickable. The
 end-to-end test then waits for its actual worker to finish instead of polling a
 running flag for a fixed number of iterations. This is test synchronization, not
 a change to approval policy or application behavior.
+
+The [final semantic-gate run](https://github.com/skanga/banger/actions/runs/34679546098)
+at commit `749835d7e698c1a315e2a7c8875620b86bc815bd` passed 202 tests in every
+Windows/Linux/macOS and Python 3.11/3.13 job. Lint, formatting, wheel and source
+builds passed in all six jobs.
