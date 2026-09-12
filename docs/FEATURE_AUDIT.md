@@ -412,3 +412,8 @@ lint and formatting. The index cache version was advanced to rebuild old entries
 These nodes identify declared source origins. They do not evaluate expressions,
 prove the current value of a mutable default, or traverse upstream dependencies
 of a default expression. Those distinctions remain visible in the graph evidence.
+
+The [native default-origin run](https://github.com/skanga/banger/actions/runs/34703759760)
+at commit `0a381653a1fb1214e177e2ff6e9fa257cf3599d7` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
