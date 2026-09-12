@@ -4,6 +4,7 @@ import asyncio
 import json
 import platform
 import sys
+import uuid
 
 from banger.context import ContextWindow
 from banger.permissions import Action
@@ -40,11 +41,13 @@ class Agent:
         self.messages.append(message)
 
     def _repair_pending(self):
-        answered = {m["tool_call_id"] for m in self.messages if m["role"] == "tool"}
-        pending = [
-            c for m in self.messages for c in m.get("tool_calls", []) if c["id"] not in answered
-        ]
-        for call in pending:
+        pending = {}
+        for message in self.messages:
+            for call in message.get("tool_calls", []):
+                pending[call["id"]] = call
+            if message["role"] == "tool":
+                pending.pop(message["tool_call_id"], None)
+        for call in pending.values():
             self._append(
                 {
                     "role": "tool",
@@ -91,11 +94,17 @@ class Agent:
                 )
                 # Validate all call structures before saving a response or performing side effects.
                 calls = response.get("tool_calls", [])
+                identities = set()
                 for call in calls:
-                    if not call.get("id") or not isinstance(
-                        json.loads(call["function"]["arguments"]), dict
+                    identity = call.get("id")
+                    if (
+                        not isinstance(identity, str)
+                        or not identity.strip()
+                        or identity in identities
+                        or not isinstance(json.loads(call["function"]["arguments"]), dict)
                     ):
                         raise ValueError("Malformed model tool call")
+                    identities.add(identity)
                 self._append(response)
                 if not calls:
                     self.on_event("done", response.get("content") or "")
@@ -110,12 +119,13 @@ class Agent:
                     )
                     payload = json.dumps(result, ensure_ascii=False)
                     if len(payload) > 60000:
-                        self.state.put_artifact("tool-output", call["id"], result)
+                        artifact = uuid.uuid4().hex
+                        self.state.put_artifact("tool-output", artifact, result)
                         payload = json.dumps(
                             {
                                 "truncated": True,
                                 "preview": payload[:58000],
-                                "saved_artifact": call["id"],
+                                "saved_artifact": artifact,
                             }
                         )
                     self._append({"role": "tool", "tool_call_id": call["id"], "content": payload})

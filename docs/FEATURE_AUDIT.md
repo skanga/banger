@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 316 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 322 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,22 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## Repeated tool-call IDs and recovery
+
+Pending-call repair now processes conversation occurrences in order rather than
+using a global set of answered IDs. A completed older call cannot suppress repair
+of a later interrupted call with the same ID. Duplicate IDs within a response,
+blank IDs and non-string IDs are rejected before saving that response or invoking
+any tools. Large outputs now use independent artifact IDs instead of raw model
+call IDs, preventing new results from overwriting older saved outputs.
+
+Six cases cover resumed pending calls, malformed/duplicate IDs, safe follow-up
+after rejection, large-output retention and actual asynchronous cancellation.
+Five cases failed before the fix. All 322 local tests passed afterward, with lint
+and formatting clear. Recovery reports uncertain action outcomes without retrying
+the action. Previously overwritten artifact contents cannot be reconstructed by
+this change; already malformed historical batches are not migrated.
 
 ## CSS attribute operators and flags
 

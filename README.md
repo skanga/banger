@@ -108,6 +108,8 @@ Python runtime tracing runs the target in a separate interpreter and records cal
 
 The provider adapters implement [Anthropic tool-use messages](https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls) and [OpenAI-compatible Chat Completions messages](https://developers.openai.com/api/reference/cli/resources/chat). Streaming tool arguments are assembled before execution. Interrupted or truncated responses are not executed. Transient server and connection failures have bounded retries. There is no subscription-account login integration.
 
+Recovery pairs tool results with call occurrences, so a reused ID in a later response cannot hide an interrupted call. Duplicate IDs within one response, blank IDs and non-string IDs are rejected before tools run. Large outputs use independent artifact IDs to preserve earlier results when a model reuses a call ID.
+
 ## Verification and current limits
 
 ```console
