@@ -387,6 +387,11 @@ local suite passed 247 tests, plus lint and formatting. This remains syntactic,
 path-insensitive analysis, not proof that a closure executes or a branch runs.
 Other languages retain lexical expression approximations.
 
+The [native expression-scope run](https://github.com/skanga/banger/actions/runs/34707150033)
+at commit `9f6e06ba8f859bfb80a7ab3e727284a1a0ba4523` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## Module-level flow isolation
 
 Module values and expressions now include the source path in their graph identity.
