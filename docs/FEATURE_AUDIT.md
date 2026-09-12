@@ -388,3 +388,12 @@ incorrect or missing behavior; two additional cases established the expanded
 report contract. The full local suite passed 222 tests; lint and formatting passed.
 No expressions are evaluated. Default-expression origins, dynamic splat contents,
 decorated signatures and language-specific binding outside Python remain gaps.
+
+The initial native run passed all flow cases but exposed a Linux/Python 3.13
+acceptance-test race: the approval modal was active before its button children
+were mounted. The click helper now waits for mounting before checking layout.
+All 13 local UI/end-to-end tests passed after this test-only correction.
+The [final flow-binding run](https://github.com/skanga/banger/actions/runs/34683390044)
+at commit `f5a418c09c21d3afb12de1c791c569473333e5a7` passed all six native
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds.
