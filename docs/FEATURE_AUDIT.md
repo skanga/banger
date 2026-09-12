@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 276 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling selectors and source provenance, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 286 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling selectors and source provenance, embedded literal source maps, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,26 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## Embedded Python literal source maps
+
+Python markup literals now map each decoded character to its physical source line.
+The mapper handles ordinary/raw literals, escape sequences, line continuations and
+implicit adjacent-literal concatenation. It verifies that the decoded text matches
+the AST value before returning an exact map. HTML elements and inline stylesheet
+rules use that map, including CSS byte offsets after Unicode text. Literal IDs
+include the source column so two literals on one line no longer overwrite a
+document. Unsupported mappings retain an approximate-fragment label.
+
+Ten cases cover escaped newlines/tags, adjacent literals, uneven indentation and
+comments, continuations, Unicode text, raw literals, octal/named escapes and
+same-line document isolation. Five initial cases reproduced incorrect locations or
+document loss; two established the map-evidence contract. An additional uneven
+indentation case failed before restoring grouping context during tokenization.
+The complete local suite passed 286 tests. After an import-spacing correction,
+all 37 markup tests passed again, with lint and formatting clear. The mapping
+does not execute project code. Dynamic f-strings, explicit runtime concatenation
+and generated markup remain outside exact literal mapping.
 
 ## Markup source provenance
 

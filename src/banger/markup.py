@@ -11,6 +11,7 @@ from tree_sitter_language_pack import get_parser
 from banger.css_variables import CSSVariables
 from banger.discovery import discover_files
 from banger.index import text
+from banger.literal_map import literal_lines
 
 INHERITED = {
     "color",
@@ -37,11 +38,22 @@ INHERITED = {
 
 
 class Document(HTMLParser):
-    def __init__(self, path, identity, offset=0):
+    def __init__(self, path, identity, offset=0, source="", source_lines=None):
         super().__init__(convert_charrefs=True)
         self.path, self.identity, self.source_offset = path, identity, offset
         self.nodes, self.stack, self.resources = [], [], []
         self.style = None
+        self.source_lines = source_lines
+        self.line_starts = [0] + [i + 1 for i, char in enumerate(source) if char == "\n"]
+
+    def _source_position(self):
+        row, column = self.getpos()
+        return self.line_starts[row - 1] + column
+
+    def _source_line(self):
+        if self.source_lines is not None:
+            return self.source_lines[self._source_position()]
+        return self.getpos()[0] + self.source_offset
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
@@ -52,13 +64,19 @@ class Document(HTMLParser):
             "parent": self.stack[-1] if self.stack else None,
             "path": self.path,
             "document": self.identity,
-            "line": self.getpos()[0] + self.source_offset,
+            "line": self._source_line(),
+            "source_mapping": "exact literal"
+            if self.source_lines is not None
+            else "source text"
+            if self.path.endswith((".html", ".htm"))
+            else "approximate fragment",
         }
         self.nodes.append(node)
         if tag == "link" and attributes.get("rel") == "stylesheet" and attributes.get("href"):
-            self.resources.append(("link", attributes["href"], node["line"]))
+            self.resources.append(("link", attributes["href"], node["line"], None))
         if tag == "style":
             self.style = []
+            self.style_lines = []
             self.style_line = node["line"] + self.get_starttag_text().count("\n")
         if tag not in {
             "area",
@@ -84,7 +102,9 @@ class Document(HTMLParser):
 
     def handle_endtag(self, tag):
         if tag == "style" and self.style is not None:
-            self.resources.append(("inline", "".join(self.style), self.style_line))
+            self.resources.append(
+                ("inline", "".join(self.style), self.style_line, self.style_lines)
+            )
             self.style = None
         for index in range(len(self.stack) - 1, -1, -1):
             identity = self.stack[index]
@@ -95,6 +115,14 @@ class Document(HTMLParser):
     def handle_data(self, data):
         if self.style is not None:
             self.style.append(data)
+            if self.source_lines is not None:
+                start = self._source_position()
+                self.style_lines.extend(self.source_lines[start : start + len(data)])
+            else:
+                line = self.getpos()[0] + self.source_offset
+                for char in data:
+                    self.style_lines.append(line)
+                    line += char == "\n"
 
 
 class MarkupIndex:
@@ -113,7 +141,7 @@ class MarkupIndex:
                 continue
             source = path.read_text(encoding="utf-8", errors="replace")
             relative = path.relative_to(self.root).as_posix()
-            fragments = [(relative, source, 0)] if path.suffix in {".html", ".htm"} else []
+            fragments = [(relative, source, 0, None)] if path.suffix in {".html", ".htm"} else []
             if path.suffix == ".py":
                 try:
                     for node in ast.walk(ast.parse(source)):
@@ -124,15 +152,16 @@ class MarkupIndex:
                         ):
                             fragments.append(
                                 (
-                                    f"{relative}:string:{node.lineno}",
+                                    f"{relative}:string:{node.lineno}:{node.col_offset}",
                                     node.value,
                                     node.lineno - 1,
+                                    literal_lines(source, node),
                                 )
                             )
                 except SyntaxError:
                     pass
-            for identity, fragment, offset in fragments:
-                doc = Document(relative, identity, offset)
+            for identity, fragment, offset, source_lines in fragments:
+                doc = Document(relative, identity, offset, fragment, source_lines)
                 doc.feed(fragment)
                 self.documents[identity] = doc
                 self.nodes.update({n["id"]: n for n in doc.nodes})
@@ -155,7 +184,7 @@ class MarkupIndex:
                 )
         for identity, document in self.documents.items():
             self.rules[identity] = []
-            for kind, value, line in document.resources:
+            for kind, value, line, source_lines in document.resources:
                 if kind == "inline":
                     css, source = value, document.path
                 else:
@@ -170,7 +199,7 @@ class MarkupIndex:
                         target.relative_to(self.root).as_posix(),
                     )
                     line = 1
-                self.rules[identity].extend(self._css(css, source, line))
+                self.rules[identity].extend(self._css(css, source, line, source_lines))
         return {"documents": len(self.documents), "elements": len(self.nodes)}
 
     @staticmethod
@@ -202,8 +231,13 @@ class MarkupIndex:
                 )
         return declarations
 
-    def _css(self, source, path, line):
+    def _css(self, source, path, line, source_lines=None):
         tree = get_parser("css").parse(source.encode())
+        byte_lines = (
+            [origin for char, origin in zip(source, source_lines) for _ in char.encode("utf-8")]
+            if source_lines is not None
+            else None
+        )
         rules = []
         for node in tree.root_node.named_children:
             if node.type != "rule_set":
@@ -212,7 +246,9 @@ class MarkupIndex:
                         {
                             "unresolved": text(node),
                             "path": path,
-                            "line": line + node.start_point.row,
+                            "line": byte_lines[node.start_byte]
+                            if byte_lines
+                            else line + node.start_point.row,
                         }
                     )
                 continue
@@ -226,7 +262,9 @@ class MarkupIndex:
                         "selector": text(selector),
                         "declarations": self._declarations(block),
                         "path": path,
-                        "line": line + node.start_point.row,
+                        "line": byte_lines[node.start_byte]
+                        if byte_lines
+                        else line + node.start_point.row,
                     }
                 )
         return rules
