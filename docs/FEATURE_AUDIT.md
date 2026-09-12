@@ -28,11 +28,23 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 345 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 349 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
 5. Continue strengthening language and markup analysis where the current evidence is narrower than Benzi's described capability.
+
+## Serialized context limits
+
+Context compaction now retains a latest message or complete tool-call/result
+group that exceeds the preferred suffix size but fits the total serialized
+budget with its history-retrieval notice. Excerpts are shortened against their
+JSON-escaped size, so non-ASCII text cannot make the result exceed that budget.
+Two new regression cases failed before the fix; additional cases cover a large
+tool group and rejection of a genuinely oversized latest request. The six
+context tests verify unchanged saved history, repeatable compaction and intact
+call/result pairs. The limit remains a character budget for conversation JSON,
+not a provider-specific token budget including system text and tool schemas.
 
 ## Provider event framing
 
