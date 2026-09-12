@@ -9,6 +9,28 @@ from banger.permissions import Action
 from banger.state import StateStore
 
 
+async def test_compact_terminal_setup_and_approval_controls_remain_usable(tmp_path):
+    app = BangerApp(tmp_path)
+    async with app.run_test(size=(80, 24)) as pilot:
+        app.screen.query_one("#model", Input).value = "fixture-model"
+        app.screen.query_one("#mode", Select).value = "ask"
+        start = app.screen.query_one("#start")
+        await pilot.pause()
+        start.scroll_visible(immediate=True, animate=False)
+        await pilot.pause()
+        assert await pilot.click("#start")
+        await pilot.pause()
+        assert app.agent is not None
+        pending = asyncio.create_task(
+            app.approve(Action("edit", path="sample.py"), "Long proposal\n" * 100)
+        )
+        await pilot.pause()
+        assert isinstance(app.screen, Approval)
+        assert await pilot.click("#deny")
+        assert await pending == "deny"
+        assert not isinstance(app.screen, Approval)
+
+
 async def test_shutdown_ignores_late_agent_updates(tmp_path, monkeypatch):
     app = BangerApp(tmp_path)
     close_all = app._close_all

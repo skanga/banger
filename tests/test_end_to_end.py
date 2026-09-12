@@ -15,19 +15,21 @@ from banger.state import StateStore
 from banger.tools import Toolbox
 
 
-def provider_response(provider, name=None, args=None, step=0):
+def provider_response(
+    provider, name=None, args=None, step=0, final_text="Fixed addition; the reproduction passes."
+):
     if provider == "anthropic":
         block = (
             {"type": "tool_use", "id": f"call{step}", "name": name, "input": args}
             if name
-            else {"type": "text", "text": "Fixed addition; the reproduction passes."}
+            else {"type": "text", "text": final_text}
         )
         return httpx.Response(
             200, json={"content": [block], "stop_reason": "tool_use" if name else "end_turn"}
         )
     message = {
         "role": "assistant",
-        "content": "" if name else "Fixed addition; the reproduction passes.",
+        "content": "" if name else final_text,
     }
     if name:
         message["tool_calls"] = [
@@ -112,7 +114,7 @@ async def test_tui_approval_and_completed_edit(tmp_path):
                     {"path": "hello.py", "content": "print('hello')\n"},
                     step,
                 )
-            return provider_response("openai")
+            return provider_response("openai", final_text="Created hello.py.")
 
         await app.client.client.aclose()
         app.client.client = httpx.AsyncClient(transport=httpx.MockTransport(respond))

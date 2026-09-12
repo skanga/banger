@@ -6,14 +6,14 @@ This audit preserves the user's target: an independent terminal coding agent wit
 |---|---|---|
 | Python + uv application in the current directory | Isolated Windows wheel installation and live coding task; native CI tests/builds on all three platforms | Installed-wheel live task was Windows only |
 | Independent implementation; mini-swe-agent optional | Banger source imports no Benzi/mini-swe-agent modules | No proprietary implementation available for differential comparison |
-| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py | Exported SVG exists; browser unavailable for visual inspection |
-| Chat, source, diffs, tools, sessions, interrupt, mouse | Textual widgets and interaction tests | More terminal-size and cancellation UI checks desirable |
-| All ten code languages | test_index.py language matrix | Parsing/basic calls are not complete language semantics |
+| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; regenerated 120x40 SVG rendered and visually inspected | Snapshot uses deterministic model responses; not a live terminal recording |
+| Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Native terminal emulators can differ from headless interaction tests |
+| All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
 | Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
 | Forward/backward flow across calls | test_flow.py; dependency graph with resolution evidence | Path-insensitive; ambiguous edges remain candidates |
 | Markup, CSS, DOM-JS, Python-embedded markup | test_markup.py | Conditional/browser-dependent rules, computed layout and exhaustive selector/cascade semantics not implemented |
-| Syntax and semantic write gates | test_edits.py, test_batch_edits.py; combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
+| Syntax and semantic write gates | test_edits.py, test_batch_edits.py, test_language_edits.py; syntax and lost-binding rejection across all ten languages, combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
 | Impact and relevant tests | Matching before/after edit reports with callers, value consumers, and relevant tests; persisted by snapshot ID | Test selection can miss dynamically invoked tests; reports do not execute tests |
 | Runtime tracing and static overlay | test_tracing.py; hash-validated runtime profile edges | Python only; traces are bounded and large/custom values are summarized |
 | Generated reproductions and local execution | test_end_to_end.py, test_execution.py; native cmd and Linux/macOS bash checks passed in CI | Commands run on the host; no container isolation |
@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 184 tests; grouped-edit, shutdown-race, C++ hierarchy and Git discovery verification are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 195 tests; ten-language edit acceptance, compact-terminal interaction, grouped edits, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -287,3 +287,22 @@ access rules or adding a global trust override.
 The [native discovery run](https://github.com/skanga/banger/actions/runs/34665685211)
 at commit `ed83b07afeb4687ffaf55ddcc4944e417724aa8a` passed 184 tests in every
 Windows/Linux/macOS and Python 3.11/3.13 job, plus lint, formatting and both builds.
+
+## Broader edit and TUI acceptance
+
+Ten new tool-level acceptance cases exercise each requested code language through
+`profile`, `write_file`, `replace_text` and `rollback_edit`. Each verifies syntax
+rejection and lost-call-binding rejection without changing source or creating an
+undo snapshot, a permitted arithmetic edit with before/after caller impact,
+preserved CRLF bytes, four explicit edit approvals, and exact-byte undo after
+reopening state. These are gate/persistence tests, not compiler or runtime checks
+for the ten languages. All passed against the existing implementation.
+
+A compact 80x24 interaction test verifies that the setup screen can scroll to its
+Start button and a long approval proposal can be denied. The test disables scroll
+animation before clicking to avoid racing the animation. The current 120x40
+approval-and-edit test also regenerated `docs/tui-preview.svg`; it was rendered
+with an isolated headless Chrome profile and visually inspected. Source tree,
+tabs, chat, prompt, status and shortcuts were visible without overlapping
+controls. The mock final response now accurately describes creating `hello.py`.
+This is evidence for that rendered layout, not every terminal emulator or screen.
