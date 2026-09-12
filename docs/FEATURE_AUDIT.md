@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 292 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 316 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,24 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## CSS attribute operators and flags
+
+Attribute selectors now support `~=`, `|=`, `^=`, `$=` and `*=` alongside presence
+and equality. Explicit `i` uses ASCII-only case folding; `s` uses exact comparison.
+HTML attribute names are matched without ASCII case distinctions. Quoted values
+may contain selector punctuation and closing brackets, and specificity counts the
+attribute selector rather than punctuation inside its value. Empty substring/word
+operands do not match; word matching uses CSS whitespace. These semantics follow
+[Selectors Level 4 attribute selectors](https://www.w3.org/TR/selectors-4/#attribute-selectors).
+
+Twenty-four new cases cover operator results, explicit flags, non-ASCII case
+distinctions, quoted punctuation, empty values, cascade specificity, invalid flags
+and CSS whitespace. Seventeen new cases failed before implementation; the existing
+prefix-selector rejection test was changed to require the newly supported match.
+All 316 local tests passed, with lint and formatting clear. Escapes, namespaces
+and unflagged HTML attribute-specific case rules remain outside this subset;
+unflagged values retain the prior case-sensitive approximation.
 
 ## Dynamic Python markup templates
 

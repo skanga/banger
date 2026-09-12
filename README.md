@@ -82,6 +82,8 @@ HTML queries include static markup embedded in Python string literals. CSS analy
 
 Static selectors support descendant, child (`>`), adjacent-sibling (`+`) and subsequent-sibling (`~`) relationships between elements, including mixed chains. Sibling matching stays within a parent and document; text and comments do not interrupt element adjacency. These relationships follow [Selectors Level 4](https://www.w3.org/TR/selectors-4/#adjacent-sibling-combinators).
 
+Attribute selectors support presence, equality, word (`~=`), hyphen-prefix (`|=`), prefix (`^=`), suffix (`$=`) and substring (`*=`) matching, plus explicit ASCII-insensitive `i` and sensitive `s` flags. Quoted punctuation remains part of the attribute value. CSS escapes and namespaces remain unsupported; unflagged values use a case-sensitive approximation rather than all HTML attribute-specific rules.
+
 Style reports include the source file and rule-start line, preserving that origin through inheritance. Inline `style` attributes point to the containing element's start line. Python markup literals map decoded characters to source lines through escapes, line continuations and implicit adjacent-literal concatenation. Separate literals on the same line remain distinct documents. Element reports label exact literal maps and approximate fragments; dynamic f-strings and runtime string construction do not have exact maps.
 
 Python f-strings are indexed as whole template skeletons. Unevaluated expressions appear in query warnings, including when no static element matches. Template elements are marked dynamic, and their style reports contain static candidates rather than final runtime styles; interpolation can change the document structure.

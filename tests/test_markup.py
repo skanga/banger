@@ -91,7 +91,6 @@ def test_attribute_selectors_do_not_silently_match_every_element(tmp_path, selec
     index = MarkupIndex(tmp_path)
     index.refresh()
     if "^=" in selector:
-        with pytest.raises(ValueError, match="Unsupported"):
-            index.query(selector)
+        assert len(index.query(selector)) == 1
     else:
         assert index.query(selector) == []

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from tree_sitter_language_pack import get_parser
 
+from banger.css_attributes import ATTRIBUTE, attribute_matches
 from banger.css_variables import CSSVariables
 from banger.discovery import discover_files
 from banger.index import text
@@ -265,9 +266,9 @@ class MarkupIndex:
     @staticmethod
     def _parts(selector):
         # Explicit subset: simple compounds with descendant, child and sibling combinators.
-        if re.search(r"[:,\\]", selector):
+        if re.search(r"[:,\\]", ATTRIBUTE.sub("", selector)):
             raise ValueError("Dynamic/complex selector is not statically evaluated: " + selector)
-        parts = re.findall(r"(?:\[[^\]]*\]|[^\s>+~])+|[>+~]", selector.strip())
+        parts = re.findall(rf"(?:{ATTRIBUTE.pattern}|[^\s>+~])+|[>+~]", selector.strip())
         combinators = {">", "+", "~"}
         if parts and (
             parts[0] in combinators
@@ -278,17 +279,11 @@ class MarkupIndex:
         return parts
 
     def _simple(self, selector, node):
-        attrs = []
-        for attribute in re.findall(r"\[[^\]]*\]", selector):
-            match = re.fullmatch(
-                r"""\[\s*([\w-]+)\s*(?:=\s*(?:"([^"]*)"|'([^']*)'|([^\s\]"']+))\s*)?\]""",
-                attribute,
-            )
-            if not match:
-                raise ValueError("Unsupported attribute selector: " + attribute)
-            name, *values = match.groups()
-            attrs.append((name, next((v for v in values if v is not None), None)))
-        rest = re.sub(r"\[[^\]]*\]", "", selector)
+        attrs = [
+            attribute_matches(attribute, node["attributes"])
+            for attribute in ATTRIBUTE.findall(selector)
+        ]
+        rest = ATTRIBUTE.sub("", selector)
         if not re.fullmatch(r"(?:[\w*-]+)?(?:[.#][\w-]+)*", rest):
             raise ValueError("Unsupported selector: " + selector)
         tag = re.match(r"^[\w*-]+", rest)
@@ -301,10 +296,7 @@ class MarkupIndex:
             (attributes.get("class") or "").split()
         ):
             return False
-        return all(
-            name in attributes and (value is None or attributes[name] == value)
-            for name, value in attrs
-        )
+        return all(attrs)
 
     def matches(self, selector, node):
         if selector.strip() == ":root":
@@ -345,9 +337,9 @@ class MarkupIndex:
     def specificity(selector):
         if selector.strip() == ":root":
             return 0, 1, 0
-        without_attrs = re.sub(r"\[[^\]]*\]", "", selector)
+        without_attrs = ATTRIBUTE.sub("", selector)
         ids = len(re.findall(r"#[\w-]+", without_attrs))
-        classes = len(re.findall(r"\.[\w-]+", without_attrs)) + selector.count("[")
+        classes = len(re.findall(r"\.[\w-]+", without_attrs)) + len(ATTRIBUTE.findall(selector))
         tags = sum(
             bool(re.match(r"^[a-zA-Z][\w-]*", part))
             for part in re.split(r"\s+|[>+~]", without_attrs)
