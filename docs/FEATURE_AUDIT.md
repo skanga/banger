@@ -283,3 +283,7 @@ errors, and no files from the ignored reference checkouts. The check initially
 exposed mixed sandbox/user ownership of the Git metadata created during setup;
 the `.git` directory owner was corrected to the normal user without changing
 access rules or adding a global trust override.
+
+The [native discovery run](https://github.com/skanga/banger/actions/runs/34665685211)
+at commit `ed83b07afeb4687ffaf55ddcc4944e417724aa8a` passed 184 tests in every
+Windows/Linux/macOS and Python 3.11/3.13 job, plus lint, formatting and both builds.
