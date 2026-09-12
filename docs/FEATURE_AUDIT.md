@@ -385,6 +385,11 @@ fix. All 253 local tests passed afterward, together with lint and formatting.
 The limit applies to returned graph nodes; call-site listings and graph-building
 memory are not bounded by this limit.
 
+The [native graph-limit run](https://github.com/skanga/banger/actions/runs/34707636286)
+at commit `6d6fa14e2a824b1b4e6ba988c810ce0a7d7109f1` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## Python expression dependency verification
 
 Python flow expressions now use AST reads rather than matching words in source
