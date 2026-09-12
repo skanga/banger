@@ -39,7 +39,7 @@ INHERITED = {
 class Document(HTMLParser):
     def __init__(self, path, identity, offset=0):
         super().__init__(convert_charrefs=True)
-        self.path, self.identity, self.offset = path, identity, offset
+        self.path, self.identity, self.source_offset = path, identity, offset
         self.nodes, self.stack, self.resources = [], [], []
         self.style = None
 
@@ -52,13 +52,14 @@ class Document(HTMLParser):
             "parent": self.stack[-1] if self.stack else None,
             "path": self.path,
             "document": self.identity,
-            "line": self.getpos()[0] + self.offset,
+            "line": self.getpos()[0] + self.source_offset,
         }
         self.nodes.append(node)
         if tag == "link" and attributes.get("rel") == "stylesheet" and attributes.get("href"):
             self.resources.append(("link", attributes["href"], node["line"]))
         if tag == "style":
             self.style = []
+            self.style_line = node["line"] + self.get_starttag_text().count("\n")
         if tag not in {
             "area",
             "base",
@@ -83,7 +84,7 @@ class Document(HTMLParser):
 
     def handle_endtag(self, tag):
         if tag == "style" and self.style is not None:
-            self.resources.append(("inline", "".join(self.style), self.getpos()[0] + self.offset))
+            self.resources.append(("inline", "".join(self.style), self.style_line))
             self.style = None
         for index in range(len(self.stack) - 1, -1, -1):
             identity = self.stack[index]
@@ -168,6 +169,7 @@ class MarkupIndex:
                         target.read_text(encoding="utf-8"),
                         target.relative_to(self.root).as_posix(),
                     )
+                    line = 1
                 self.rules[identity].extend(self._css(css, source, line))
         return {"documents": len(self.documents), "elements": len(self.nodes)}
 
@@ -333,7 +335,14 @@ class MarkupIndex:
             try:
                 matched = self.matches(rule["selector"], node)
             except ValueError as exc:
-                unresolved.append({"selector": rule["selector"], "reason": str(exc)})
+                unresolved.append(
+                    {
+                        "selector": rule["selector"],
+                        "reason": str(exc),
+                        "path": rule["path"],
+                        "line": rule["line"],
+                    }
+                )
                 continue
             if matched:
                 for declaration in rule["declarations"]:
@@ -342,7 +351,12 @@ class MarkupIndex:
                     if prop not in winners or rank >= winners[prop][0]:
                         winners[prop] = (
                             rank,
-                            {**declaration, "selector": rule["selector"], "path": rule["path"]},
+                            {
+                                **declaration,
+                                "selector": rule["selector"],
+                                "path": rule["path"],
+                                "line": rule["line"],
+                            },
                         )
         inline = node["attributes"].get("style")
         if inline:
@@ -354,7 +368,12 @@ class MarkupIndex:
                     if prop not in winners or rank >= winners[prop][0]:
                         winners[prop] = (
                             rank,
-                            {**declaration, "selector": "inline style", "path": node["path"]},
+                            {
+                                **declaration,
+                                "selector": "inline style",
+                                "path": node["path"],
+                                "line": node["line"],
+                            },
                         )
         computed = {p: dict(v[1]) for p, v in winners.items()}
         inherited = self.styles(node["parent"])["computed"] if node["parent"] else {}

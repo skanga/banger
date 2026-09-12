@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 269 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling selectors, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 276 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling selectors and source provenance, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,22 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## Markup source provenance
+
+The document's source-line offset no longer overwrites HTMLParser's internal
+column offset. Inline stylesheet rule locations start at the style content,
+including multiline opening tags, instead of at the closing tag. Linked CSS
+locations start at line one of the CSS file rather than inheriting the HTML link
+line. Winning and inherited style reports now retain source path and rule-start
+line; unsupported selector reports also carry those locations. Inline style
+attributes point to the containing element's start line.
+
+Seven cases cover inline/linked rules, multiline tags, inheritance, unsupported
+selectors, embedded multiline Python markup and HTML element columns. Six initial
+cases failed before the correction. All 276 local tests passed afterward, along
+with lint and formatting. Escaped or concatenated Python string contents still
+need an exact source map; these tests cover literal multiline source offsets.
 
 ## CSS sibling selectors
 

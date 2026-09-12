@@ -82,6 +82,8 @@ HTML queries include static markup embedded in Python string literals. CSS analy
 
 Static selectors support descendant, child (`>`), adjacent-sibling (`+`) and subsequent-sibling (`~`) relationships between elements, including mixed chains. Sibling matching stays within a parent and document; text and comments do not interrupt element adjacency. These relationships follow [Selectors Level 4](https://www.w3.org/TR/selectors-4/#adjacent-sibling-combinators).
 
+Style reports include the source file and rule-start line, preserving that origin through inheritance. Inline `style` attributes point to the containing element's start line. Literal multiline Python markup retains its file offset; escaped or concatenated string contents do not yet have an exact source map.
+
 ## Editing and verification
 
 Source changes use atomic replacement and durable before/after snapshots. Syntax errors reject the edit before writing. A semantic gate rejects known call bindings that become unresolved and newly invalid statically known Python call signatures. It is not a complete type checker. Edit results include diffs and caller impact so the model can select and run relevant tests.
