@@ -11,7 +11,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
 | Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
-| Forward/backward flow across calls | test_flow.py, test_flow_arguments.py, test_flow_defaults.py; shared Python signature binding, declaration-scope default dependencies and dependency graph with resolution evidence | Path-insensitive; ambiguous edges remain candidates; splats and decorated signatures unresolved; runtime default values and imported/free-variable default dependencies unverified; other languages use positional approximations |
+| Forward/backward flow across calls | test_flow.py, test_flow_arguments.py, test_flow_defaults.py, test_flow_scopes.py; Python signature binding, default dependencies, global/closure bindings and dependency graph with resolution evidence | Path-insensitive; ambiguous edges remain candidates; splats and decorated signatures unresolved; runtime default values and imported value origins unverified; other languages use positional approximations |
 | Markup, CSS, DOM-JS, Python-embedded markup | test_markup.py | Conditional/browser-dependent rules, computed layout and exhaustive selector/cascade semantics not implemented |
 | Syntax and semantic write gates | test_edits.py, test_batch_edits.py, test_language_edits.py; syntax and lost-binding rejection across all ten languages, combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
 | Impact and relevant tests | Matching before/after edit reports with callers, value consumers, and relevant tests; persisted by snapshot ID | Test selection can miss dynamically invoked tests; reports do not execute tests |
@@ -28,11 +28,31 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 349 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 360 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
 5. Continue strengthening language and markup analysis where the current evidence is narrower than Benzi's described capability.
+
+## Python global and closure value flow
+
+The index persists compiler scope classifications from Python's standard-library
+[symtable](https://docs.python.org/3/library/symtable.html), without executing
+project code. Flow reads and assignment/return holders now share variable
+identities for global and closure bindings. Method reads skip class-local values
+when Python resolves the name to an enclosing function or module. Explicit
+`global` and `nonlocal` writes reach consumers of the corresponding binding.
+The file-cache version was advanced so existing indexes rebuild this metadata.
+
+Eleven cases in `test_flow_scopes.py` cover forward/backward traversal, module
+and closure reads, methods, local/import/loop shadowing, global/nonlocal writes,
+outer-scope defaults and persisted-index restart. Six initial positive cases
+failed before implementation; three shadowing cases already passed. Two further
+cases verify globals created inside functions and outer-scope defaults.
+The full local suite passed 360 tests, plus Ruff lint/format and package builds.
+This does not resolve imported value origins, class-body execution order,
+dynamic rebinding, or all modern annotation/type-parameter scopes. Dependency
+graphs remain path-insensitive and do not prove runtime values.
 
 ## Serialized context limits
 

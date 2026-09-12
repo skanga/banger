@@ -108,13 +108,22 @@ class FlowAnalysis:
 
     def graph(self, symbol, value, reverse=False):
         nodes, edges = {}, []
+
+        def binding_scope(scope, name):
+            return self.index.symbols.get(scope, {}).get("python_value_scopes", {}).get(name, scope)
+
         module_names = {
-            path: {a["name"] for a in file.get("assignments", []) if a["scope"] is None}
+            path: {
+                a["name"]
+                for a in file.get("assignments", [])
+                if binding_scope(a["scope"], a["name"]) is None
+            }
             for path, file in self.index.files.items()
         }
 
         def variable(scope, name, path=None):
             path = self.index.symbols[scope]["path"] if scope else path
+            scope = binding_scope(scope, name)
             identity = f"{scope or 'module|' + path}|value|{name}"
             nodes[identity] = {"id": identity, "symbol": scope, "name": name, "path": path}
             return identity
@@ -131,6 +140,12 @@ class FlowAnalysis:
             # Limit reads to known bindings; other languages retain lexical approximation.
             owner = self.index.symbols.get(scope, {})
             names = set(parameter_names(owner) + owner.get("bindings", []))
+            if "python_value_scopes" in owner:
+                names = {
+                    name
+                    for name, target in owner["python_value_scopes"].items()
+                    if target is not None or name in module_names.get(path, set())
+                }
             if scope is None:
                 names.update(module_names.get(path, set()))
             reads = (

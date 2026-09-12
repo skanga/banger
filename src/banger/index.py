@@ -17,6 +17,7 @@ from banger.discovery import discover_files
 from banger.gates import binding_regressions, call_key
 from banger.hierarchy import base_links, csharp_namespace, declared_bases
 from banger.outline import source_outline
+from banger.python_scopes import annotate_value_scopes
 from banger.receivers import ReceiverBindings
 
 LANGUAGES = {
@@ -114,7 +115,7 @@ class CodeIndex:
     def __init__(self, root: Path, state=None):
         self.root = root.resolve()
         self.state = state
-        self.files = (state.artifact("index", "files-v14") or {}) if state else {}
+        self.files = (state.artifact("index", "files-v15") or {}) if state else {}
         self.go_module = ""
         self.symbols: dict[str, dict] = {}
         self.calls: list[dict] = []
@@ -162,7 +163,7 @@ class CodeIndex:
         self._build_hierarchies()
         self._resolve_calls()
         if self.state:
-            self.state.put_artifact("index", "files-v14", self.files)
+            self.state.put_artifact("index", "files-v15", self.files)
         return {
             "files": len(self.files),
             "symbols": len(self.symbols),
@@ -407,6 +408,7 @@ class CodeIndex:
         imports = {}
         scoped_imports = {}
         if language == "python":
+            annotate_value_scopes(data, path, symbols)
             try:
                 for node in ast.walk(ast.parse(data)):
                     if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
