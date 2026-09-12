@@ -10,7 +10,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 | Chat, source, diffs, tools, sessions, interrupt, mouse | Textual widgets and interaction tests | More terminal-size and cancellation UI checks desirable |
 | All ten code languages | test_index.py language matrix | Parsing/basic calls are not complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
-| Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings; remaining languages retain name candidates. References retain syntactic scope rather than full type binding |
+| Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
 | Forward/backward flow across calls | test_flow.py; dependency graph with resolution evidence | Path-insensitive; ambiguous edges remain candidates |
 | Markup, CSS, DOM-JS, Python-embedded markup | test_markup.py | Conditional/browser-dependent rules, computed layout and exhaustive selector/cascade semantics not implemented |
 | Syntax and semantic write gates | test_edits.py, test_batch_edits.py; combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 160 tests; grouped-edit and shutdown-race verification are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 175 tests; grouped-edit, shutdown-race and C++ hierarchy verification are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -239,3 +239,19 @@ at commit `ffb456ec5f040032d63f9232ede5a35705d1105e`, passed all six jobs:
 
 These are native hosted-runner checks, including real cmd/bash execution and
 Python tracing. TUI tests remain headless, and provider requests in CI are mocked.
+
+## C++ hierarchy follow-up
+
+Parsed C++ base expressions now retain namespace qualification and template
+arguments while excluding access modifiers. Hierarchy links select preceding
+complete definitions from the nearest same-file namespace/class scope. Function
+and block-local classes do not leak into other scopes. Qualified lookup stops at
+a shadowing namespace; unexpanded aliases and using declarations remain unknown.
+Cross-file candidates do not establish include visibility. Conditional, template,
+incomplete, and later declarations are not reported as resolved ancestry.
+
+Fifteen regression cases cover these behaviors and cached restart/refresh.
+The primary base-expression, lookup, alias-shadowing and local-scope cases failed
+before implementation. Index cache version 13 rebuilds existing projects with the
+new scope metadata. This remains a static subset of C++ lookup, without build
+configuration, preprocessing, include expansion or template instantiation.

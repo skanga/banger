@@ -3,6 +3,7 @@
 import re
 
 from banger.bindings import node_text, resolve_binding
+from banger.cpp_hierarchy import base_link as cpp_base_link
 
 CLASS_KINDS = {
     "class_definition",
@@ -18,7 +19,7 @@ CLASS_KINDS = {
 
 
 def declared_bases(node):
-    """Read complete Java/C#/JavaScript/TypeScript base expressions."""
+    """Read complete Java/C#/JavaScript/TypeScript/C++ base expressions."""
     result = []
     wrappers = {
         "superclass",
@@ -28,9 +29,12 @@ def declared_bases(node):
         "class_heritage",
         "implements_clause",
         "extends_type_clause",
+        "base_class_clause",
     }
 
     def collect(part):
+        if part.type in {"access_specifier", "comment"}:
+            return
         if part.type == "extends_clause":
             result.append(re.sub(r"^extends\s+", "", node_text(part)))
         elif part.type in wrappers:
@@ -67,6 +71,16 @@ def base_links(index, definition):
     classes = [s for s in index.symbols.values() if s["kind"] in CLASS_KINDS]
     result = []
     for expression in definition["bases"]:
+        if definition["language"] == "cpp":
+            result.append(
+                cpp_base_link(
+                    definition,
+                    expression,
+                    classes,
+                    index.files[definition["path"]].get("cpp_type_bindings", []),
+                )
+            )
+            continue
         candidates = []
         proven = False
         evidence = "name candidates only; language-specific binding not proven"

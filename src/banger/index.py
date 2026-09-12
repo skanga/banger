@@ -12,6 +12,8 @@ from pathlib import Path
 from tree_sitter_language_pack import get_parser
 
 from banger.bindings import extract_bindings, resolve_binding
+from banger.cpp_hierarchy import declaration_scope as cpp_declaration_scope
+from banger.cpp_hierarchy import type_bindings as cpp_type_bindings
 from banger.hierarchy import base_links, csharp_namespace, declared_bases
 from banger.outline import source_outline
 from banger.receivers import ReceiverBindings
@@ -124,7 +126,7 @@ class CodeIndex:
     def __init__(self, root: Path, state=None):
         self.root = root.resolve()
         self.state = state
-        self.files = (state.artifact("index", "files-v12") or {}) if state else {}
+        self.files = (state.artifact("index", "files-v13") or {}) if state else {}
         self.go_module = ""
         self.symbols: dict[str, dict] = {}
         self.calls: list[dict] = []
@@ -177,7 +179,7 @@ class CodeIndex:
         self._build_hierarchies()
         self._resolve_calls()
         if self.state:
-            self.state.put_artifact("index", "files-v12", self.files)
+            self.state.put_artifact("index", "files-v13", self.files)
         return {
             "files": len(self.files),
             "symbols": len(self.symbols),
@@ -189,6 +191,8 @@ class CodeIndex:
         language = LANGUAGES[Path(path).suffix.lower()]
         tree = get_parser(language).parse(data)
         module_bindings = extract_bindings(language, tree.root_node)
+        if language == "cpp":
+            module_bindings["cpp_type_bindings"] = cpp_type_bindings(tree.root_node)
         symbols, calls, references, assignments, returns = [], [], [], [], []
         outlines = {}
 
@@ -281,8 +285,10 @@ class CodeIndex:
                             .decode("utf-8", errors="replace")
                             .strip(),
                             "bases": declared_bases(node)
-                            if language in {"java", "csharp", "javascript", "typescript", "tsx"}
+                            if language
+                            in {"java", "csharp", "javascript", "typescript", "tsx", "cpp"}
                             else re.findall(r"[A-Za-z_]\w*", text(bases)),
+                            **(cpp_declaration_scope(node) if language == "cpp" else {}),
                             "parameters": parameter_names,
                             "bindings": [],
                             "documentation": declaration_comments(node, data),
