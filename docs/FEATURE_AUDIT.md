@@ -389,6 +389,11 @@ case exposed dropped dynamic tags. All 292 local tests passed, with lint and
 formatting clear. No project code is executed. Runtime structure and exact
 f-string source maps remain unverified; these are explicitly partial templates.
 
+The [native dynamic-template run](https://github.com/skanga/banger/actions/runs/34711991120)
+at commit `aed03ce4dfff606d2f6349a22304d43f7ddab48d` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## Embedded Python literal source maps
 
 Python markup literals now map each decoded character to its physical source line.
