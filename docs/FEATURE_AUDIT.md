@@ -389,6 +389,11 @@ duplicate-site, argument and return-holder evidence. All 257 local tests passed,
 along with lint and formatting checks. These measurements isolate queries after
 indexing and do not establish end-to-end performance on every repository.
 
+The [native call-query run](https://github.com/skanga/banger/actions/runs/34707946884)
+at commit `88dc14a0a14061a960a8f27bfb0d779f982613f9` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## Dependency graph node limits
 
 The existing 1,000-node dependency graph limit is now enforced for each newly
