@@ -658,6 +658,12 @@ around source fragments without evaluating them. The graph remains
 path-insensitive: assignment order, imported/free-variable dependencies and
 runtime mutations are not proven.
 
+The default-dependency follow-up passed all 337 local Windows tests, Ruff lint
+and formatting, and wheel/source-distribution builds. Commit
+`98ffc93e978cb116dce83ba58094f96f82bc9eb2` passed all six native
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and builds: [CI run 34714068737](https://github.com/skanga/banger/actions/runs/34714068737).
+
 The [native default-origin run](https://github.com/skanga/banger/actions/runs/34703759760)
 at commit `0a381653a1fb1214e177e2ff6e9fa257cf3599d7` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
