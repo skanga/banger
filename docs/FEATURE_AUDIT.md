@@ -388,6 +388,11 @@ local tests passed; after a pairwise-iteration lint correction, all 20 markup te
 passed again, with lint and formatting clear. This uses the static parsed element
 tree, not browser DOM repair, dynamic mutation or layout evaluation.
 
+The [native sibling-selector run](https://github.com/skanga/banger/actions/runs/34708298515)
+at commit `ef0ea5637d8b41fa9b37657fad35c5b34d4880de` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## Call-query traversal scaling
 
 Call-tree and shortest-path queries group resolved calls into adjacency lists
