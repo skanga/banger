@@ -3,6 +3,8 @@
 import re
 from collections import deque
 
+from banger.arguments import bind_arguments, parameter_names
+
 
 class FlowAnalysis:
     def __init__(self, index):
@@ -10,23 +12,20 @@ class FlowAnalysis:
 
     def backflow(self, symbol, parameter):
         definition = self.index.get_definition(symbol)
-        if parameter not in definition["parameters"]:
-            raise ValueError(f"Unknown parameter; indexed parameters: {definition['parameters']}")
-        position = definition["parameters"].index(parameter)
+        if parameter not in parameter_names(definition):
+            raise ValueError(
+                f"Unknown parameter; indexed parameters: {parameter_names(definition)}"
+            )
         sites = []
         for call in self.index.get_callers(definition["id"]):
-            argument = None
-            for value in call["arguments"]:
-                if re.match(rf"^{re.escape(parameter)}\s*=", value):
-                    argument = value.split("=", 1)[1].strip()
-                    break
-            if argument is None and position < len(call["arguments"]):
-                argument = call["arguments"][position]
+            bindings, binding = bind_arguments(definition, call)
+            arguments = bindings.get(parameter, [])
+            argument = arguments[0] if len(arguments) == 1 else None
             assignments = self.index.files[call["path"]].get("assignments", [])
             definitions = [
                 a
                 for a in assignments
-                if a["name"] == argument
+                if a["name"] in arguments
                 and a["scope"] == call["caller"]
                 and a["line"] <= call["line"]
             ]
@@ -36,6 +35,8 @@ class FlowAnalysis:
                     "path": call["path"],
                     "line": call["line"],
                     "argument": argument,
+                    "arguments": arguments,
+                    "binding": binding,
                     "definitions": definitions,
                     "resolution": call["resolution"],
                 }
@@ -122,7 +123,7 @@ class FlowAnalysis:
             }
             # Match only names already known as locals or parameters, avoiding calls/types/keywords.
             owner = self.index.symbols.get(scope, {})
-            names = set(owner.get("parameters", []) + owner.get("bindings", []))
+            names = set(parameter_names(owner) + owner.get("bindings", []))
             for name in re.findall(r"\b[A-Za-z_]\w*\b", content):
                 if name in names:
                     edges.append(
@@ -162,30 +163,19 @@ class FlowAnalysis:
                 )
         for call in self.index.calls:
             for target in call["targets"]:
-                parameters = self.index.symbols[target]["parameters"]
-                if "." in call["name"] and parameters[:1] in [["self"], ["cls"]]:
-                    parameters = parameters[1:]
-                for position, argument in enumerate(call["arguments"]):
-                    keyword = re.match(r"^([A-Za-z_]\w*)\s*=(?!=)\s*(.*)$", argument, re.DOTALL)
-                    param = (
-                        keyword.group(1)
-                        if keyword
-                        else parameters[position]
-                        if position < len(parameters)
-                        else None
-                    )
-                    if param not in parameters:
-                        continue
-                    content = keyword.group(2) if keyword else argument
-                    source = expression(call["caller"], content, call["path"], call["line"])
-                    edges.append(
-                        {
-                            "source": source,
-                            "target": variable(target, param),
-                            "evidence": call["resolution"],
-                            "kind": "call argument",
-                        }
-                    )
+                bindings, binding = bind_arguments(self.index.symbols[target], call)
+                for param, arguments in bindings.items():
+                    for content in arguments:
+                        source = expression(call["caller"], content, call["path"], call["line"])
+                        edges.append(
+                            {
+                                "source": source,
+                                "target": variable(target, param),
+                                "evidence": call["resolution"],
+                                "binding": binding,
+                                "kind": "call argument",
+                            }
+                        )
                 if call.get("holder"):
                     edges.append(
                         {
