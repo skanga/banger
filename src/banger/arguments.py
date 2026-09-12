@@ -10,6 +10,16 @@ def parameter_names(definition):
     return definition.get("parameters", [])
 
 
+def omitted_defaults(definition, bindings, binding):
+    if binding != "signature":
+        return {}
+    return {
+        name: origin
+        for name, origin in definition.get("parameter_defaults", {}).items()
+        if name not in bindings and name != definition.get("implicit_receiver")
+    }
+
+
 def bind_arguments(definition, call):
     if not definition["path"].endswith(".py"):
         return {

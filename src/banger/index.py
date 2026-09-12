@@ -114,7 +114,7 @@ class CodeIndex:
     def __init__(self, root: Path, state=None):
         self.root = root.resolve()
         self.state = state
-        self.files = (state.artifact("index", "files-v13") or {}) if state else {}
+        self.files = (state.artifact("index", "files-v14") or {}) if state else {}
         self.go_module = ""
         self.symbols: dict[str, dict] = {}
         self.calls: list[dict] = []
@@ -162,7 +162,7 @@ class CodeIndex:
         self._build_hierarchies()
         self._resolve_calls()
         if self.state:
-            self.state.put_artifact("index", "files-v13", self.files)
+            self.state.put_artifact("index", "files-v14", self.files)
         return {
             "files": len(self.files),
             "symbols": len(self.symbols),
@@ -473,6 +473,26 @@ class CodeIndex:
                                     }
                                 )
                             owner["signature_parameters"] = params
+                            defaults = dict(
+                                zip([a.arg for a in positional[required:]], node.args.defaults)
+                            )
+                            defaults.update(
+                                (a.arg, default)
+                                for a, default in zip(node.args.kwonlyargs, node.args.kw_defaults)
+                                if default is not None
+                            )
+                            owner["parameter_defaults"] = {
+                                name: {
+                                    "expression": ast.get_source_segment(
+                                        data.decode("utf-8"), default
+                                    )
+                                    or ast.unparse(default),
+                                    "path": path,
+                                    "line": default.lineno,
+                                    "scope": owner["parent"],
+                                }
+                                for name, default in defaults.items()
+                            }
                     if isinstance(node, ast.Import):
                         enclosing = [
                             s for s in symbols if s["line"] <= node.lineno <= s["end_line"]

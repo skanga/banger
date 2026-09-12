@@ -3,7 +3,7 @@
 import re
 from collections import deque
 
-from banger.arguments import bind_arguments, parameter_names
+from banger.arguments import bind_arguments, omitted_defaults, parameter_names
 
 
 class FlowAnalysis:
@@ -37,6 +37,7 @@ class FlowAnalysis:
                     "argument": argument,
                     "arguments": arguments,
                     "binding": binding,
+                    "default": omitted_defaults(definition, bindings, binding).get(parameter),
                     "definitions": definitions,
                     "resolution": call["resolution"],
                 }
@@ -164,6 +165,25 @@ class FlowAnalysis:
         for call in self.index.calls:
             for target in call["targets"]:
                 bindings, binding = bind_arguments(self.index.symbols[target], call)
+                defaults = omitted_defaults(self.index.symbols[target], bindings, binding)
+                for param, origin in defaults.items():
+                    identity = f"{target}|default|{param}"
+                    nodes[identity] = {
+                        "id": identity,
+                        "symbol": origin["scope"],
+                        "expression": origin["expression"],
+                        "path": origin["path"],
+                        "line": origin["line"],
+                    }
+                    edges.append(
+                        {
+                            "source": identity,
+                            "target": variable(target, param),
+                            "evidence": call["resolution"],
+                            "kind": "default argument",
+                            "binding": "declared default origin; runtime object may have changed",
+                        }
+                    )
                 for param, arguments in bindings.items():
                     for content in arguments:
                         source = expression(call["caller"], content, call["path"], call["line"])
