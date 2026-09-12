@@ -54,6 +54,10 @@ This does not resolve imported value origins, class-body execution order,
 dynamic rebinding, or all modern annotation/type-parameter scopes. Dependency
 graphs remain path-insensitive and do not prove runtime values.
 
+Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
 ## Serialized context limits
 
 Context compaction now retains a latest message or complete tool-call/result
