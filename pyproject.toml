@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "banger"
+version = "0.1.0"
+description = "A terminal coding agent with structured source analysis"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "textual>=8.2,<9",
+    "tree-sitter-language-pack>=1.17,<2",
+    # 0.26.0 crashes during node traversal on larger inputs; see test_index_scale.py.
+    "tree-sitter>=0.25.2,<0.26",
+    "httpx>=0.28,<1",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "pytest-asyncio>=0.25", "ruff>=0.9"]
+
+[project.scripts]
+banger = "banger.app:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.banger/
+dist/
+*.egg-info/
+Benzi/
+mini-swe-agent/
+.env
+.env.*
