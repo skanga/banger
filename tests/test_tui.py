@@ -9,6 +9,12 @@ from banger.permissions import Action
 from banger.state import StateStore
 
 
+async def wait_until(pilot, condition):
+    async with asyncio.timeout(5):
+        while not condition():
+            await pilot.pause(0.01)
+
+
 async def test_compact_terminal_setup_and_approval_controls_remain_usable(tmp_path):
     app = BangerApp(tmp_path)
     async with app.run_test(size=(80, 24)) as pilot:
@@ -24,11 +30,20 @@ async def test_compact_terminal_setup_and_approval_controls_remain_usable(tmp_pa
         pending = asyncio.create_task(
             app.approve(Action("edit", path="sample.py"), "Long proposal\n" * 100)
         )
-        await pilot.pause()
-        assert isinstance(app.screen, Approval)
-        assert await pilot.click("#deny")
-        assert await pending == "deny"
-        assert not isinstance(app.screen, Approval)
+        try:
+            await pilot.pause()
+            assert isinstance(app.screen, Approval)
+            deny = app.screen.query_one("#deny")
+            await wait_until(
+                pilot,
+                lambda: deny.region.width > 0 and app.get_widget_at(*deny.region.center)[0] is deny,
+            )
+            assert await pilot.click(deny, offset=(deny.size.width // 2, deny.size.height // 2))
+            assert await asyncio.wait_for(pending, timeout=5) == "deny"
+            assert not isinstance(app.screen, Approval)
+        finally:
+            pending.cancel()
+            await asyncio.gather(pending, return_exceptions=True)
 
 
 async def test_shutdown_ignores_late_agent_updates(tmp_path, monkeypatch):
@@ -206,11 +221,23 @@ async def test_new_session_clears_tool_and_diff_views(tmp_path):
                 {"name": "write_file", "result": {"diff": "--- old\n+++ new\n+content"}},
             )
         )
-        app.query_one("#tabs", TabbedContent).active = "tools-tab"
-        await pilot.pause()
+        await pilot.click("#--content-tab-tools-tab")
+        await wait_until(
+            pilot,
+            lambda: (
+                app.query_one("#tabs", TabbedContent).active == "tools-tab"
+                and app.query_one("#tool-log", RichLog).lines
+            ),
+        )
         assert app.query_one("#tool-log", RichLog).lines
-        app.query_one("#tabs", TabbedContent).active = "diff-tab"
-        await pilot.pause()
+        await pilot.click("#--content-tab-diff-tab")
+        await wait_until(
+            pilot,
+            lambda: (
+                app.query_one("#tabs", TabbedContent).active == "diff-tab"
+                and app.query_one("#diff-log", RichLog).lines
+            ),
+        )
         assert app.query_one("#diff-log", RichLog).lines
         await pilot.press("ctrl+n")
         await pilot.pause()

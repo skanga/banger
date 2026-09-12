@@ -306,3 +306,10 @@ with an isolated headless Chrome profile and visually inspected. Source tree,
 tabs, chat, prompt, status and shortcuts were visible without overlapping
 controls. The mock final response now accurately describes creating `hello.py`.
 This is evidence for that rendered layout, not every terminal emulator or screen.
+
+The first expanded CI run passed five jobs but exposed two timing-sensitive
+Windows/Python 3.11 UI assertions. The compact approval test now waits for the
+button's actual hit target and always cleans up its pending request. The session
+test now clicks tabs and waits for the selected pane to render: direct reactive
+tab assignments could be overwritten by queued focus messages. These changes
+strengthen the test's user-flow evidence without changing application behavior.
