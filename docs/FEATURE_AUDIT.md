@@ -365,3 +365,8 @@ and retry. Six cases failed before the fix. The local full suite passed 211 test
 Ruff lint and formatting checks passed. Interruption is injected at the write
 boundary; these tests do not simulate power loss or provide filesystem-level
 compare-and-swap protection against concurrent writers.
+
+The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/34680117126)
+at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
+and package builds. Local wheel and source distribution builds also passed.
