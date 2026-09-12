@@ -391,6 +391,11 @@ all 37 markup tests passed again, with lint and formatting clear. The mapping
 does not execute project code. Dynamic f-strings, explicit runtime concatenation
 and generated markup remain outside exact literal mapping.
 
+The [native embedded-literal run](https://github.com/skanga/banger/actions/runs/34710824423)
+at commit `9bb1e6787e1867376854eac26547cbbbf9b9ba57` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and package builds. Local wheel and source distribution builds also passed.
+
 ## Markup source provenance
 
 The document's source-line offset no longer overwrites HTMLParser's internal
