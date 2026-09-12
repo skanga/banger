@@ -45,6 +45,12 @@ new regression cases failed before the fix; two JSON-boundary cases were added
 afterward. This validates response structures, not transactionality across valid
 calls: later tool execution or approval failures can follow earlier effects.
 
+Verification: all 335 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`acb16d7915c71edc06fd6cafbb702eea9857b865` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and package builds: [CI run 34713827891](https://github.com/skanga/banger/actions/runs/34713827891).
+
 ## Live installed-package check, 2026-09-11
 
 Used `gpt-5.3-codex-spark` at `http://127.0.0.1:10531/v1`, without an API key,
