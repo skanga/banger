@@ -225,17 +225,21 @@ class FlowAnalysis:
         for edge in edges:
             adjacency.setdefault(edge["target"] if reverse else edge["source"], []).append(edge)
         queue, seen, selected = deque([start]), {start}, []
-        while queue and len(seen) < 1000:
+        truncated = False
+        while queue:
             current = queue.popleft()
             for edge in adjacency.get(current, []):
-                selected.append(edge)
                 following = edge["source"] if reverse else edge["target"]
                 if following not in seen:
+                    if len(seen) >= 1000:
+                        truncated = True
+                        continue
                     seen.add(following)
                     queue.append(following)
+                selected.append(edge)
         return {
             "nodes": [nodes[n] for n in sorted(seen)],
             "edges": selected,
-            "truncated": bool(queue),
+            "truncated": truncated,
             "scope": "Conservative, path-insensitive dependency graph; ambiguous call candidates remain marked",
         }

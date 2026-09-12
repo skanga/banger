@@ -74,6 +74,8 @@ Module-level assignments can connect return holders to subsequent call arguments
 
 Python expression dependencies use AST reads, excluding string text, attribute labels, keyword labels and names bound within lambdas or comprehensions. Reads in f-strings, lambda defaults and comprehension iterables remain visible. Other languages currently retain lexical expression approximations.
 
+Forward/backward dependency graphs return at most 1,000 nodes and flag `truncated` when reachable nodes were omitted. Returned edges always refer to returned nodes. This is a graph-node limit, not a byte limit on the full tool response or an index-memory limit.
+
 Python flow queries bind explicit arguments using indexed signatures, including positional-only, keyword-only and variadic parameters. Ordinary implicit-receiver calls retain their candidate resolution evidence. Omitted defaults include their declared expression, file, line and enclosing scope; this is source provenance, not the current value of a mutable default object. Dynamic splats and signatures hidden by decorators remain unresolved. Other languages currently use positional argument approximations.
 
 HTML queries include static markup embedded in Python string literals. CSS analysis covers linked document scope, specificity, source order, `!important`, inline styles, common inherited properties, and basic custom-property substitution. DOM queries locate literal `querySelector`, `querySelectorAll`, and `getElementById` selectors. Unsupported dynamic selectors, conditional rules, and missing stylesheets are reported rather than silently applied. This is not a browser layout engine.
