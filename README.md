@@ -84,6 +84,8 @@ Static selectors support descendant, child (`>`), adjacent-sibling (`+`) and sub
 
 Style reports include the source file and rule-start line, preserving that origin through inheritance. Inline `style` attributes point to the containing element's start line. Python markup literals map decoded characters to source lines through escapes, line continuations and implicit adjacent-literal concatenation. Separate literals on the same line remain distinct documents. Element reports label exact literal maps and approximate fragments; dynamic f-strings and runtime string construction do not have exact maps.
 
+Python f-strings are indexed as whole template skeletons. Unevaluated expressions appear in query warnings, including when no static element matches. Template elements are marked dynamic, and their style reports contain static candidates rather than final runtime styles; interpolation can change the document structure.
+
 ## Editing and verification
 
 Source changes use atomic replacement and durable before/after snapshots. Syntax errors reject the edit before writing. A semantic gate rejects known call bindings that become unresolved and newly invalid statically known Python call signatures. It is not a complete type checker. Edit results include diffs and caller impact so the model can select and run relevant tests.

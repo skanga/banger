@@ -373,11 +373,12 @@ class Toolbox:
 
     @tool
     async def query_markup(self, selector: str):
-        """Find HTML elements by static CSS selector, including markup in Python string literals."""
+        """Find HTML and Python template candidates by CSS selector; reports unevaluated interpolations."""
         await self.blocking(self.markup.refresh)
         return {
             "elements": self.markup.query(selector),
             "dom_references": self.markup.dom_references(selector),
+            "unresolved": self.markup.unresolved,
         }
 
     @tool

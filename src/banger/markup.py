@@ -1,6 +1,5 @@
 """Document-scoped HTML, CSS and DOM reference analysis."""
 
-import ast
 import re
 from html.parser import HTMLParser
 from itertools import pairwise
@@ -11,7 +10,7 @@ from tree_sitter_language_pack import get_parser
 from banger.css_variables import CSSVariables
 from banger.discovery import discover_files
 from banger.index import text
-from banger.literal_map import literal_lines
+from banger.python_markup import python_fragments
 
 INHERITED = {
     "color",
@@ -38,11 +37,12 @@ INHERITED = {
 
 
 class Document(HTMLParser):
-    def __init__(self, path, identity, offset=0, source="", source_lines=None):
+    def __init__(self, path, identity, offset=0, source="", source_lines=None, unresolved=None):
         super().__init__(convert_charrefs=True)
         self.path, self.identity, self.source_offset = path, identity, offset
         self.nodes, self.stack, self.resources = [], [], []
         self.style = None
+        self.unresolved = unresolved or []
         self.source_lines = source_lines
         self.line_starts = [0] + [i + 1 for i, char in enumerate(source) if char == "\n"]
 
@@ -65,6 +65,7 @@ class Document(HTMLParser):
             "path": self.path,
             "document": self.identity,
             "line": self._source_line(),
+            "dynamic": bool(self.unresolved),
             "source_mapping": "exact literal"
             if self.source_lines is not None
             else "source text"
@@ -130,39 +131,31 @@ class MarkupIndex:
         self.root = Path(root).resolve()
         self.nodes, self.documents, self.rules, self.references = {}, {}, {}, []
         self.previous_siblings = {}
+        self.unresolved = []
 
     def refresh(self):
         self._style_cache = {}
         self.nodes, self.documents, self.rules, self.references = {}, {}, {}, []
         self.previous_siblings = {}
+        self.unresolved = []
         visible_files = set(discover_files(self.root))
         for path in sorted(visible_files):
             if path.suffix not in {".html", ".htm", ".py", ".js", ".ts", ".jsx", ".tsx"}:
                 continue
             source = path.read_text(encoding="utf-8", errors="replace")
             relative = path.relative_to(self.root).as_posix()
-            fragments = [(relative, source, 0, None)] if path.suffix in {".html", ".htm"} else []
+            fragments = (
+                [(relative, source, 0, None, [])] if path.suffix in {".html", ".htm"} else []
+            )
             if path.suffix == ".py":
                 try:
-                    for node in ast.walk(ast.parse(source)):
-                        if (
-                            isinstance(node, ast.Constant)
-                            and isinstance(node.value, str)
-                            and re.search(r"<[a-zA-Z]", node.value)
-                        ):
-                            fragments.append(
-                                (
-                                    f"{relative}:string:{node.lineno}:{node.col_offset}",
-                                    node.value,
-                                    node.lineno - 1,
-                                    literal_lines(source, node),
-                                )
-                            )
+                    fragments.extend(python_fragments(source, relative))
                 except SyntaxError:
                     pass
-            for identity, fragment, offset, source_lines in fragments:
-                doc = Document(relative, identity, offset, fragment, source_lines)
+            for identity, fragment, offset, source_lines, unresolved in fragments:
+                doc = Document(relative, identity, offset, fragment, source_lines, unresolved)
                 doc.feed(fragment)
+                self.unresolved.extend(unresolved)
                 self.documents[identity] = doc
                 self.nodes.update({n["id"]: n for n in doc.nodes})
                 previous = {}
@@ -365,7 +358,7 @@ class MarkupIndex:
         if identity in self._style_cache:
             return self._style_cache[identity]
         node = self.nodes[identity]
-        winners, unresolved = {}, []
+        winners, unresolved = {}, list(self.documents[node["document"]].unresolved)
         for order, rule in enumerate(self.rules[node["document"]]):
             if "unresolved" in rule:
                 unresolved.append(rule)
@@ -453,7 +446,12 @@ class MarkupIndex:
             "element": node,
             "computed": computed,
             "unresolved": unresolved,
-            "scope": "Resolved author declarations and common inheritance; no layout, shorthand expansion, or browser defaults",
+            "scope": "Resolved author declarations and common inheritance; no layout, shorthand expansion, or browser defaults"
+            + (
+                "; dynamic template results are static candidates, not final runtime styles"
+                if node["dynamic"]
+                else ""
+            ),
         }
         self._style_cache[identity] = result
         return result

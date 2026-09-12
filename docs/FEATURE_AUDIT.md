@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 286 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling selectors and source provenance, embedded literal source maps, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 292 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,24 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## Dynamic Python markup templates
+
+F-strings are now extracted as whole template skeletons rather than walking their
+literal fragments as separate documents. Unevaluated interpolations retain their
+source expressions, including nested format values. Elements are marked dynamic;
+query results expose unresolved templates even when the selector matches no static
+element. Style reports preserve static candidates but state that interpolation may
+change text, attributes, styles or element structure. Dynamic tag templates remain
+visible as unresolved even when their skeleton yields no element.
+
+Six cases cover structure around interpolations, static style candidates,
+non-execution of interpolation calls, unmatched dynamic attributes, plain-literal
+evidence, dynamic tags and nested format expressions. Two initial cases exposed
+lost document structure, two established the uncertainty contract, and one added
+case exposed dropped dynamic tags. All 292 local tests passed, with lint and
+formatting clear. No project code is executed. Runtime structure and exact
+f-string source maps remain unverified; these are explicitly partial templates.
 
 ## Embedded Python literal source maps
 
