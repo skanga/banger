@@ -255,3 +255,8 @@ The primary base-expression, lookup, alias-shadowing and local-scope cases faile
 before implementation. Index cache version 13 rebuilds existing projects with the
 new scope metadata. This remains a static subset of C++ lookup, without build
 configuration, preprocessing, include expansion or template instantiation.
+
+At commit `82cd2b774e9aba474504d65883a8e2f78babdcac`, the
+[native C++ follow-up run](https://github.com/skanga/banger/actions/runs/34664666044)
+passed 175 tests in each of the six Windows/Linux/macOS and Python 3.11/3.13 jobs.
+Lint, formatting, and wheel/source builds passed in every job as well.
