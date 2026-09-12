@@ -80,6 +80,8 @@ Python flow queries bind explicit arguments using indexed signatures, including 
 
 HTML queries include static markup embedded in Python string literals. CSS analysis covers linked document scope, specificity, source order, `!important`, inline styles, common inherited properties, and basic custom-property substitution. DOM queries locate literal `querySelector`, `querySelectorAll`, and `getElementById` selectors. Unsupported dynamic selectors, conditional rules, and missing stylesheets are reported rather than silently applied. This is not a browser layout engine.
 
+Static selectors support descendant, child (`>`), adjacent-sibling (`+`) and subsequent-sibling (`~`) relationships between elements, including mixed chains. Sibling matching stays within a parent and document; text and comments do not interrupt element adjacency. These relationships follow [Selectors Level 4](https://www.w3.org/TR/selectors-4/#adjacent-sibling-combinators).
+
 ## Editing and verification
 
 Source changes use atomic replacement and durable before/after snapshots. Syntax errors reject the edit before writing. A semantic gate rejects known call bindings that become unresolved and newly invalid statically known Python call signatures. It is not a complete type checker. Edit results include diffs and caller impact so the model can select and run relevant tests.

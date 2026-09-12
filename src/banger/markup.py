@@ -3,6 +3,7 @@
 import ast
 import re
 from html.parser import HTMLParser
+from itertools import pairwise
 from pathlib import Path
 
 from tree_sitter_language_pack import get_parser
@@ -99,10 +100,12 @@ class MarkupIndex:
     def __init__(self, root):
         self.root = Path(root).resolve()
         self.nodes, self.documents, self.rules, self.references = {}, {}, {}, []
+        self.previous_siblings = {}
 
     def refresh(self):
         self._style_cache = {}
         self.nodes, self.documents, self.rules, self.references = {}, {}, {}, []
+        self.previous_siblings = {}
         visible_files = set(discover_files(self.root))
         for path in sorted(visible_files):
             if path.suffix not in {".html", ".htm", ".py", ".js", ".ts", ".jsx", ".tsx"}:
@@ -132,6 +135,10 @@ class MarkupIndex:
                 doc.feed(fragment)
                 self.documents[identity] = doc
                 self.nodes.update({n["id"]: n for n in doc.nodes})
+                previous = {}
+                for node in doc.nodes:
+                    self.previous_siblings[node["id"]] = previous.get(node["parent"])
+                    previous[node["parent"]] = node["id"]
             for match in re.finditer(
                 r"""(?:querySelector(All)?|getElementById)\s*\(\s*(["'])(.*?)\2\s*\)""", source
             ):
@@ -224,10 +231,18 @@ class MarkupIndex:
 
     @staticmethod
     def _parts(selector):
-        # Explicit subset: type, universal, ID, class, simple attributes, descendants and children.
-        if re.search(r"[:+~,\\]", selector):
+        # Explicit subset: simple compounds with descendant, child and sibling combinators.
+        if re.search(r"[:,\\]", selector):
             raise ValueError("Dynamic/complex selector is not statically evaluated: " + selector)
-        return re.findall(r"(?:\[[^\]]*\]|[^\s>])+|>", selector.strip())
+        parts = re.findall(r"(?:\[[^\]]*\]|[^\s>+~])+|[>+~]", selector.strip())
+        combinators = {">", "+", "~"}
+        if parts and (
+            parts[0] in combinators
+            or parts[-1] in combinators
+            or any(a in combinators and b in combinators for a, b in pairwise(parts))
+        ):
+            raise ValueError("Incomplete selector: " + selector)
+        return parts
 
     def _simple(self, selector, node):
         attrs = []
@@ -270,6 +285,15 @@ class MarkupIndex:
                 return False
             if index == 0:
                 return True
+            if parts[index - 1] in {"+", "~"}:
+                sibling = self.nodes.get(self.previous_siblings[element["id"]])
+                while sibling:
+                    if match(index - 2, sibling):
+                        return True
+                    if parts[index - 1] == "+":
+                        break
+                    sibling = self.nodes.get(self.previous_siblings[sibling["id"]])
+                return False
             parent = self.nodes.get(element["parent"])
             if parts[index - 1] == ">":
                 return bool(parent and index >= 2 and match(index - 2, parent))
@@ -292,7 +316,8 @@ class MarkupIndex:
         ids = len(re.findall(r"#[\w-]+", without_attrs))
         classes = len(re.findall(r"\.[\w-]+", without_attrs)) + selector.count("[")
         tags = sum(
-            bool(re.match(r"^[a-zA-Z][\w-]*", part)) for part in re.split(r"\s+|>", without_attrs)
+            bool(re.match(r"^[a-zA-Z][\w-]*", part))
+            for part in re.split(r"\s+|[>+~]", without_attrs)
         )
         return ids, classes, tags
 

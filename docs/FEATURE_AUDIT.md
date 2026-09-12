@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 257 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 269 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling selectors, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -370,6 +370,23 @@ The [native undo-recovery run](https://github.com/skanga/banger/actions/runs/346
 at commit `71bacfeb04c46a5be59bb0976fda10c8728a66cc` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting,
 and package builds. Local wheel and source distribution builds also passed.
+
+## CSS sibling selectors
+
+Markup queries and cascade matching now support adjacent (`+`) and subsequent
+(`~`) sibling combinators, including mixed child/descendant chains. Refresh builds
+previous-element links separately for each document and parent, so text/comments
+do not interrupt adjacency and unrelated documents cannot match as siblings.
+Specificity counts type selectors on both sides of either combinator. Incomplete
+combinator chains remain rejected. Behavior follows the
+[W3C sibling-selector definitions](https://www.w3.org/TR/selectors-4/#adjacent-sibling-combinators).
+
+Twelve cases cover element order, parent/document boundaries, mixed chains,
+cascade specificity, invalid syntax and model-facing queries over edited markup
+embedded in Python strings. Seven cases failed before implementation. All 269
+local tests passed; after a pairwise-iteration lint correction, all 20 markup tests
+passed again, with lint and formatting clear. This uses the static parsed element
+tree, not browser DOM repair, dynamic mutation or layout evaluation.
 
 ## Call-query traversal scaling
 
