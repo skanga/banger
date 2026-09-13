@@ -62,6 +62,24 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Read-only project text search
+
+The reference's recorded tool sequences expose project text search in addition
+to declaration search. Banger previously required broad reads or an approved
+shell command for this workflow. The independent `search_text` tool now searches
+literal text in discoverable UTF-8 workspace files, with file/directory scope,
+case-sensitive or Unicode case-folded matching, physical line numbers, and bounded
+line previews. It is available in read-only mode and uses the existing Git-ignore,
+excluded-directory and symlink discovery policy.
+
+Five tests cover literal punctuation, CR/LF line numbering, Git ignores,
+directory scope, binary input, invalid requests, result limits, Unicode case
+folding, oversized files and preview truncation. Three initial tests failed on
+the missing tool. Limits are explicit: 2 MiB per file, 32 MiB read and 10,000
+discovered files per search, 200 results, 2,000 characters per preview, and 200
+reported skipped paths plus the total skipped count. Regex search is not yet
+supported. A skipped file is not evidence that its contents contain no matches.
+
 ## Current-wheel live TUI acceptance
 
 On 2026-09-13 the current wheel was installed into the isolated Windows acceptance

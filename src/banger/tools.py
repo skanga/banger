@@ -16,6 +16,7 @@ from banger.execution import Executor
 from banger.index import CodeIndex
 from banger.markup import MarkupIndex
 from banger.permissions import Action, Decision
+from banger.text_search import search_text
 from banger.tracing import trace_file
 
 
@@ -165,6 +166,16 @@ class Toolbox:
             "total_lines": total,
             "source": "\n".join(selected),
         }
+
+    @tool
+    async def search_text(
+        self, query: str, path: str = ".", case_sensitive: bool = True, max_results: int = 100
+    ):
+        """Search literal text in workspace UTF-8 files, honoring discovery/ignore rules. Returns line locations, bounded previews, skipped files and truncation; no regex or shell execution."""
+        await self.authorize(Action("read", path=path), path)
+        return await self.blocking(
+            search_text, self.root, self.policy.resolve(path), query, case_sensitive, max_results
+        )
 
     @tool
     async def search_symbols(self, query: str):
