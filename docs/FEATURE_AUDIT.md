@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 490 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 495 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -58,6 +58,24 @@ Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
 
+## Coroutine trace lifecycle
+
+Native Python coroutines now retain invocation IDs across `await` suspension.
+Their trace records use `suspend` and `resume` rather than fabricated returns and
+fresh calls. A propagated cancellation produces `unwind` without a return value;
+handled cancellation can suspend again and ultimately return normally. An await
+that completes immediately adds no suspension event.
+
+Five real subprocess cases cover repeated awaits, propagated and recovered
+cancellation, immediately completed awaits, and concurrent invocations. Runtime
+child-call links survive resumption and state-store restart. The initial three
+cases failed with false returns or extra invocation records before the fix.
+
+This extends the existing CPython instruction-based classification to native
+coroutines. Async-generator suspension and yielded-value wrappers remain
+unresolved. Internal exception events from the Python trace hook remain visible;
+they do not necessarily mean an exception escaped the coroutine.
+
 ## Synchronous generator trace lifecycle
 
 Python runtime traces distinguish synchronous generator `yield`, `resume`, final
@@ -77,11 +95,12 @@ Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
 format and builds. No live-model check was added for this trace-event change.
 
 The classifier accounts for the CPython instruction positions observed under
-tracing. This work does not distinguish coroutine/async-generator suspension,
+tracing. At this checkpoint the work did not distinguish coroutine/async-generator suspension,
 infer completion when the interpreter emits no terminal event, or establish
 equivalent bytecode behavior in other Python implementations. Resume events do
 not themselves add new runtime call edges; child calls retain their generator
 parent. Existing trace bounds still apply.
+Native coroutine handling is covered by the subsequent work above.
 
 ## Variadic Python runtime arguments
 

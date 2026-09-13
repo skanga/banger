@@ -366,7 +366,7 @@ class Toolbox:
 
     @tool
     async def get_runtime_trace(self, function: str = ""):
-        """Read recorded Python arguments, returns, generator yields/resumes and exceptions without rerunning."""
+        """Read Python arguments, returns, yields, suspension/resumption and exceptions without rerunning."""
         trace = self.state.artifact("trace", "last") or {"events": []}
         return {
             **trace,

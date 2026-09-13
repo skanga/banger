@@ -64,9 +64,10 @@ def main():
             truncated = True
             return None
         generator = bool(frame.f_code.co_flags & inspect.CO_GENERATOR)
-        if generator and event == "call" and key in frames:
+        coroutine = bool(frame.f_code.co_flags & inspect.CO_COROUTINE)
+        if (generator or coroutine) and event == "call" and key in frames:
             event = "resume"
-        if generator and event == "return":
+        if (generator or coroutine) and event == "return":
             opcode = dis.opname[frame.f_code.co_code[frame.f_lasti]]
             # CPython 3.13 reports suspension at the following RESUME;
             # 3.11 reports it at YIELD_VALUE itself.
@@ -76,7 +77,7 @@ def main():
                 and dis.opname[frame.f_code.co_code[frame.f_lasti - 2]] == "YIELD_VALUE"
             )
             if suspended and key not in pending_exceptions:
-                event = "yield"
+                event = "suspend" if coroutine else "yield"
             elif opcode not in {"RETURN_VALUE", "RETURN_CONST"}:
                 event = "unwind"
         if event == "call":
