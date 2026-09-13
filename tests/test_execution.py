@@ -117,11 +117,17 @@ async def test_shell_executes_in_selected_directory(tmp_path):
 async def test_parent_exit_with_inherited_output_pipe_does_not_hang(tmp_path):
     script = (
         "import subprocess, sys; "
-        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(3)']); "
+        "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(30)']); "
         "print('parent finished')"
     )
     result = await asyncio.wait_for(
-        Executor(tmp_path).run_argv([sys.executable, "-c", script], timeout=0.2), timeout=1.5
+        # Allow the parent/interpreter wrapper to finish even on a loaded runner.
+        # The inherited pipe still outlives both deadlines without tree cleanup.
+        Executor(tmp_path).run_argv([sys.executable, "-c", script], timeout=5),
+        timeout=10,
     )
     assert "parent finished" in result["output"]
     assert result["exit_code"] == 0
+    # Windows job ownership closes descendants at normal parent exit. POSIX
+    # keeps the pipe open until the command deadline terminates the group.
+    assert result["timed_out"] is (os.name != "nt")
