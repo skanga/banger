@@ -89,6 +89,11 @@ report remain local. This is console transport and interaction evidence, not a
 pixel capture from every terminal emulator. Linux/macOS native PTY interaction,
 terminal-specific rendering and live Anthropic compatibility remain unverified.
 
+Commit `83b68c90c2b8198b5c01112fa74c7e437852cc04` passed all six native
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including all 540 tests, lint,
+formatting and package builds:
+[CI run 34744952074](https://github.com/skanga/banger/actions/runs/34744952074).
+
 ## Ruby superclass constant bindings
 
 Hierarchy queries now retain complete Ruby superclass expressions, including
