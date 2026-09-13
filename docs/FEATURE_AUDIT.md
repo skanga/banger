@@ -71,6 +71,12 @@ cancellation, immediately completed awaits, and concurrent invocations. Runtime
 child-call links survive resumption and state-store restart. The initial three
 cases failed with false returns or extra invocation records before the fix.
 
+Verification: 495 local Windows tests passed, with Ruff lint/format checks and
+wheel/source builds. Native [CI run 34741932379](https://github.com/skanga/banger/actions/runs/34741932379)
+at application commit `ceb2b18426dbcbfe201f246804c6acdbc3c805a7` passed all six
+Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
+format and builds. No additional live-model check was run for this trace change.
+
 This extends the existing CPython instruction-based classification to native
 coroutines. Async-generator suspension and yielded-value wrappers remain
 unresolved. Internal exception events from the Python trace hook remain visible;
