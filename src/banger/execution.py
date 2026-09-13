@@ -12,6 +12,7 @@ class Executor:
     def __init__(self, root):
         self.root = Path(root).resolve()
         self.process = None
+        self._running = False
 
     async def run(self, command: str, shell: str, cwd: str = ".", timeout: float = 120):
         if shell == "cmd":
@@ -54,8 +55,15 @@ class Executor:
     async def run_argv(
         self, argv: list[str], cwd: str = ".", timeout: float = 120, max_output: int = 50000
     ) -> dict:
-        if self.process:
+        if self._running:
             raise RuntimeError("A command is already running")
+        self._running = True
+        try:
+            return await self._run_argv(argv, cwd, timeout, max_output)
+        finally:
+            self._running = False
+
+    async def _run_argv(self, argv, cwd, timeout, max_output):
         options = (
             {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.CREATE_NO_WINDOW}
             if os.name == "nt"

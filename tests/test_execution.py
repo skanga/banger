@@ -7,6 +7,61 @@ import pytest
 from banger.execution import Executor
 
 
+async def test_concurrent_command_is_rejected_while_first_process_is_starting(
+    tmp_path, monkeypatch
+):
+    executor = Executor(tmp_path)
+    entered, release = asyncio.Event(), asyncio.Event()
+    original = asyncio.create_subprocess_exec
+    attempts = 0
+
+    async def delayed(*args, **kwargs):
+        nonlocal attempts
+        attempts += 1
+        if attempts == 1:
+            entered.set()
+            await release.wait()
+        return await original(*args, **kwargs)
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", delayed)
+    first = asyncio.create_task(executor.run_argv([sys.executable, "-c", "print('first')"]))
+    try:
+        await asyncio.wait_for(entered.wait(), timeout=5)
+        with pytest.raises(RuntimeError, match="already running"):
+            await executor.run_argv([sys.executable, "-c", "print('second')"])
+        assert attempts == 1
+    finally:
+        release.set()
+        result = await asyncio.wait_for(first, timeout=10)
+    assert "first" in result["output"]
+    assert executor.process is None
+
+
+@pytest.mark.parametrize("cancel", [False, True])
+async def test_failed_or_cancelled_launch_allows_next_command(tmp_path, monkeypatch, cancel):
+    executor = Executor(tmp_path)
+    entered = asyncio.Event()
+    original = asyncio.create_subprocess_exec
+
+    async def fail_launch(*args, **kwargs):
+        entered.set()
+        if cancel:
+            await asyncio.Event().wait()
+        raise FileNotFoundError("launch failed")
+
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", fail_launch)
+    task = asyncio.create_task(executor.run_argv([sys.executable, "-c", "pass"]))
+    await asyncio.wait_for(entered.wait(), timeout=5)
+    if cancel:
+        task.cancel()
+    with pytest.raises(asyncio.CancelledError if cancel else FileNotFoundError):
+        await task
+    monkeypatch.setattr(asyncio, "create_subprocess_exec", original)
+    result = await executor.run_argv([sys.executable, "-c", "print('recovered')"])
+    assert result["exit_code"] == 0 and "recovered" in result["output"]
+    assert executor.process is None
+
+
 @pytest.mark.asyncio
 async def test_output_exit_and_cwd(tmp_path):
     executor = Executor(tmp_path)
