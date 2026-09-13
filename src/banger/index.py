@@ -115,7 +115,7 @@ class CodeIndex:
     def __init__(self, root: Path, state=None):
         self.root = root.resolve()
         self.state = state
-        self.files = (state.artifact("index", "files-v15") or {}) if state else {}
+        self.files = (state.artifact("index", "files-v16") or {}) if state else {}
         self.go_module = ""
         self.symbols: dict[str, dict] = {}
         self.calls: list[dict] = []
@@ -163,7 +163,7 @@ class CodeIndex:
         self._build_hierarchies()
         self._resolve_calls()
         if self.state:
-            self.state.put_artifact("index", "files-v15", self.files)
+            self.state.put_artifact("index", "files-v16", self.files)
         return {
             "files": len(self.files),
             "symbols": len(self.symbols),
@@ -407,6 +407,7 @@ class CodeIndex:
         visit(tree.root_node)
         imports = {}
         scoped_imports = {}
+        value_imports = []
         if language == "python":
             annotate_value_scopes(data, path, symbols)
             try:
@@ -526,6 +527,17 @@ class CodeIndex:
                             module = ".".join((*prefix, module)).strip(".")
                         for alias in node.names:
                             bindings[alias.asname or alias.name] = module + "." + alias.name
+                            if alias.name != "*" and module:
+                                value_imports.append(
+                                    {
+                                        "name": alias.asname or alias.name,
+                                        "module": module,
+                                        "member": alias.name,
+                                        "scope": owner["id"] if owner else None,
+                                        "path": path,
+                                        "line": node.lineno,
+                                    }
+                                )
             except (SyntaxError, ValueError):
                 pass
         return {
@@ -536,6 +548,7 @@ class CodeIndex:
             "calls": calls,
             "imports": imports,
             "scoped_imports": scoped_imports,
+            "value_imports": value_imports,
             "references": references,
             "assignments": assignments,
             "returns": returns,

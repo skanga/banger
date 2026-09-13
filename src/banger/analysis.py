@@ -115,7 +115,7 @@ class FlowAnalysis:
         module_names = {
             path: {
                 a["name"]
-                for a in file.get("assignments", [])
+                for a in [*file.get("assignments", []), *file.get("value_imports", [])]
                 if binding_scope(a["scope"], a["name"]) is None
             }
             for path, file in self.index.files.items()
@@ -164,7 +164,32 @@ class FlowAnalysis:
                     )
             return identity
 
-        for file in self.index.files.values():
+        for path, file in self.index.files.items():
+            for imported in file.get("value_imports", []):
+                module = imported["module"].replace(".", "/")
+                candidates = sorted(
+                    {
+                        prefix + module + suffix
+                        for prefix in ("", "src/")
+                        for suffix in (".py", "/__init__.py")
+                        if prefix + module + suffix in self.index.files
+                    }
+                )
+                for candidate in candidates:
+                    if imported["member"] not in module_names.get(candidate, set()):
+                        continue
+                    edges.append(
+                        {
+                            "source": variable(None, imported["member"], candidate),
+                            "target": variable(imported["scope"], imported["name"], path),
+                            "kind": "import binding",
+                            "evidence": "syntactic project from-import binding",
+                            "resolution": "resolved" if len(candidates) == 1 else "ambiguous",
+                            "candidates": candidates,
+                            "path": path,
+                            "line": imported["line"],
+                        }
+                    )
             for assignment in file.get("assignments", []):
                 source = expression(
                     assignment["scope"],
