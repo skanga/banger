@@ -19,8 +19,8 @@ CLASS_KINDS = {
 }
 
 
-def declared_bases(node):
-    """Read complete Java/C#/JavaScript/TypeScript/C++ base expressions."""
+def base_parts(node):
+    """Read the syntax nodes for complete base expressions."""
     result = []
     wrappers = {
         "superclass",
@@ -37,17 +37,80 @@ def declared_bases(node):
         if part.type in {"access_specifier", "comment"}:
             return
         if part.type == "extends_clause":
-            result.append(re.sub(r"^extends\s+", "", node_text(part)))
+            result.append(part)
         elif part.type in wrappers:
             for child in part.named_children:
                 collect(child)
         else:
-            result.append(node_text(part))
+            result.append(part)
 
     for child in node.named_children:
         if child.type in wrappers:
             collect(child)
     return result
+
+
+def base_expression(part):
+    value = node_text(part)
+    return re.sub(r"^extends\s+", "", value) if part.type == "extends_clause" else value
+
+
+def declared_bases(node):
+    """Preserve source expressions, including generic arguments."""
+    return [base_expression(part) for part in base_parts(node)]
+
+
+def nominal_type(node):
+    """Extract a dotted type name without evaluating its type arguments."""
+    if node is None or node.has_error:
+        return None
+    children = [c for c in node.named_children if c.type != "comment"]
+    if node.type in {"identifier", "type_identifier", "property_identifier"}:
+        return {"name": node_text(node), "arity": 0}
+    if node.type in {"generic_type", "generic_name", "extends_clause"}:
+        if not children:
+            return None
+        name = nominal_type(children[0])
+        arguments = next(
+            (c for c in children if c.type in {"type_arguments", "type_argument_list"}), None
+        )
+        if name and arguments:
+            name["arity"] = len([c for c in arguments.named_children if c.type != "comment"])
+        return name
+    if node.type in {
+        "qualified_name",
+        "scoped_type_identifier",
+        "nested_type_identifier",
+        "member_expression",
+    }:
+        names = [nominal_type(child) for child in children]
+        if len(names) >= 2 and all(names) and not any(n["arity"] for n in names[:-1]):
+            return {"name": ".".join(n["name"] for n in names), "arity": names[-1]["arity"]}
+    return None
+
+
+def generic_metadata(node):
+    parameters = next(
+        (c for c in node.named_children if c.type in {"type_parameters", "type_parameter_list"}),
+        None,
+    )
+    parameter_nodes = (
+        [c for c in parameters.named_children if c.type == "type_parameter"] if parameters else []
+    )
+    parameter_names = [
+        node_text(
+            c.child_by_field_name("name")
+            or next(
+                (n for n in c.named_children if n.type in {"identifier", "type_identifier"}), None
+            )
+        )
+        for c in parameter_nodes
+    ]
+    return {
+        "base_types": {base_expression(part): nominal_type(part) for part in base_parts(node)},
+        "type_arity": len(parameter_nodes),
+        "type_parameters": parameter_names,
+    }
 
 
 def csharp_namespace(node):
@@ -95,7 +158,9 @@ def base_links(index, definition):
         candidates = []
         proven = False
         evidence = "name candidates only; language-specific binding not proven"
-        if not re.fullmatch(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*", expression):
+        nominal = definition.get("base_types", {}).get(expression)
+        name = nominal["name"] if nominal else expression
+        if not re.fullmatch(r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*", name):
             result.append(
                 {
                     "expression": expression,
@@ -105,7 +170,25 @@ def base_links(index, definition):
                 }
             )
             continue
-        parts = expression.split(".")
+        parts = name.split(".")
+        if definition["language"] in {"java", "csharp"}:
+            owner = definition
+            shadowed = False
+            while owner:
+                if parts[0] in owner.get("type_parameters", []):
+                    shadowed = True
+                    break
+                owner = index.symbols.get(owner["parent"])
+            if shadowed:
+                result.append(
+                    {
+                        "expression": expression,
+                        "targets": [],
+                        "resolution": "unknown",
+                        "evidence": "type parameter shadows class name; no nominal class binding",
+                    }
+                )
+                continue
         candidates = [
             s for s in classes if s["name"] == parts[-1] and s["language"] == definition["language"]
         ]
@@ -170,9 +253,7 @@ def base_links(index, definition):
             by_name = {}
             for symbol in classes:
                 by_name.setdefault(symbol["name"], []).append(symbol)
-            binding = resolve_binding(
-                {"path": definition["path"], "name": expression}, index, by_name
-            )
+            binding = resolve_binding({"path": definition["path"], "name": name}, index, by_name)
             if binding:
                 class_ids = {s["id"] for s in classes}
                 binding["targets"] = [t for t in binding["targets"] if t in class_ids]
@@ -209,6 +290,9 @@ def base_links(index, definition):
                 for s in candidates
                 if s["parent"] is None and s.get("namespace", "") in namespaces
             ]
+            if definition["language"] == "csharp":
+                arity = nominal["arity"] if nominal else 0
+                candidates = [s for s in candidates if s.get("type_arity", 0) == arity]
             proven = True
             evidence = "declared package/namespace and imported type"
         result.append(

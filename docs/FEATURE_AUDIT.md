@@ -62,6 +62,25 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Parameterized superclass and interface declarations
+
+Java, C# and TypeScript hierarchy queries now separate the complete source base
+expression from its nominal declaration name using syntax-tree nodes. Imported
+and qualified generic bases and interfaces resolve without discarding displayed
+type arguments. C# filters same-name declarations by type-parameter count, while
+Java raw bases can still refer to generic declarations. Java/C# type parameters
+that shadow a class name remain unknown rather than linking a global class.
+The persisted index advances to `files-v19` for the new metadata.
+
+Eleven regressions cover nested argument syntax, imported aliases and namespaces,
+interface inheritance, C# generic/non-generic overloads, wrong argument count,
+Java raw types, import ambiguity, computed TypeScript bases, parameter shadowing,
+restart and refresh. Five initial cases failed before implementation; two review
+cases then exposed type-parameter shadowing. These are nominal declaration links,
+not instantiated generic types or proof that the code satisfies compiler type
+constraints. Qualified nested generic owners, alias expansion and full language
+type checking remain outside this checkpoint's verified behavior.
+
 ## Native Linux and macOS terminal acceptance
 
 `test_terminal_posix.py` launches the normal interactive application with stdin,
