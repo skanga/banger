@@ -62,6 +62,21 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Search previews and original-source columns
+
+Long matching lines previously returned only their first 2,000 characters, which
+could omit the matched text. Previews now include context around the first match
+and retain the 2,000-character bound. Results include 1-based source character
+columns, an exclusive end column, and the preview's starting column. Case-folded
+literal matches map back to original-source offsets even when a character expands
+during folding, such as sharp-s. Regex offsets already refer to source characters.
+
+Three regressions first failed because long-line previews omitted the match.
+They now cover literal, Unicode case-folded and regex queries, snippet/source
+agreement and column positions. All 11 search tests passed. Matches larger than
+the preview can still be truncated; the source span and truncation marker remain
+available for targeted inspection.
+
 ## Bounded regular-expression search
 
 `search_text` now accepts `regex=True` for Python regular expressions over physical
@@ -81,11 +96,11 @@ line boundaries and existing literal search. An installed-wheel smoke check also
 passed with the isolated worker, without making a model request.
 
 The full local suite passed 620 tests with two expected POSIX-only skips in 96.23
-seconds. Lint, formatting and package builds passed. Native verification for
-commit `c4a526227146cdb58c35bc6378289db3b6cc70a0` is pending in
+seconds. Lint, formatting and package builds passed. Commit
+`c4a526227146cdb58c35bc6378289db3b6cc70a0` passed all six native
+Windows/Linux/macOS jobs on Python 3.11 and 3.13 in
 [CI run 34749073583](https://github.com/skanga/banger/actions/runs/34749073583).
-At the last check, both this run and the earlier lifecycle-test verification were
-queued. Neither is counted as a successful native verification.
+This run also includes the dependency-listing and lifecycle-test changes below.
 
 ## Static declared dependency listing
 
@@ -120,10 +135,9 @@ with a 5-second command deadline and 10-second outer bound. It explicitly checks
 normal Windows job cleanup versus POSIX group cleanup at timeout. All 19 local
 execution/dependency tests passed after this test-only correction.
 
-Native re-verification for commit `bd43afb36bf49a1759d537a83002a01942e22162`
-is pending in [CI run 34748768001](https://github.com/skanga/banger/actions/runs/34748768001).
-The run remained queued without assigned jobs at the last check; it must not be
-counted as a successful native verification yet.
+The corrected lifecycle test and dependency listing passed all six native jobs in
+the later [CI run 34749073583](https://github.com/skanga/banger/actions/runs/34749073583),
+which contains commit `bd43afb36bf49a1759d537a83002a01942e22162`.
 
 ## Independent built-in reference help
 

@@ -5,6 +5,28 @@ import re
 from banger.discovery import discover_files
 
 
+def literal_span(line, needle, case_sensitive):
+    searched = line if case_sensitive else line.casefold()
+    start = searched.find(needle)
+    if start < 0:
+        return None
+    end = start + len(needle)
+    if case_sensitive:
+        return start, end
+    # Case folding can expand characters (for example ß -> ss). Return source
+    # character offsets rather than offsets into the folded search buffer.
+    folded_offset = 0
+    source_start = None
+    for index, character in enumerate(line):
+        folded_end = folded_offset + len(character.casefold())
+        if source_start is None and folded_end > start:
+            source_start = index
+        if folded_end >= end:
+            return source_start, index + 1
+        folded_offset = folded_end
+    return None
+
+
 def search_text(root, selected, query, case_sensitive, max_results, regex=False):
     if not query or len(query) > 1000 or "\n" in query or "\r" in query:
         raise ValueError("Use a nonempty single-line literal of at most 1000 characters")
@@ -52,21 +74,26 @@ def search_text(root, selected, query, case_sensitive, max_results, regex=False)
         if lines[-1] == "":
             lines.pop()
         for line_number, line in enumerate(lines, 1):
-            matched = (
-                pattern.search(line)
-                if pattern
-                else needle in (line if case_sensitive else line.casefold())
-            )
-            if not matched:
+            if pattern:
+                matched = pattern.search(line)
+                span = matched.span() if matched else None
+            else:
+                span = literal_span(line, needle, case_sensitive)
+            if span is None:
                 continue
             if len(result["matches"]) == max_results:
                 result["truncated"] = True
                 return result
+            start, end = span
+            preview_start = min(max(0, start - 200), max(0, len(line) - 2000))
             result["matches"].append(
                 {
                     "path": relative,
                     "line": line_number,
-                    "text": line[:2000],
+                    "column": start + 1,
+                    "end_column": end + 1,
+                    "preview_start_column": preview_start + 1,
+                    "text": line[preview_start : preview_start + 2000],
                     "text_truncated": len(line) > 2000,
                 }
             )

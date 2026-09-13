@@ -1,6 +1,8 @@
 import asyncio
 import subprocess
 
+import pytest
+
 from banger.permissions import PermissionPolicy
 from banger.state import StateStore
 from banger.tools import Toolbox
@@ -75,3 +77,29 @@ async def test_text_search_reports_oversized_files_and_long_previews(tmp_path):
         assert result["skipped"] == [{"path": "large.txt", "reason": "file or search byte limit"}]
         assert result["matches"][0]["text_truncated"] is True
         assert len(result["matches"][0]["text"]) == 2000
+
+
+@pytest.mark.parametrize(
+    "prefix,query,case_sensitive,regex",
+    [
+        ("x" * 3000, "needle", True, False),
+        ("ß" * 2500, "NEEDLE", False, False),
+        ("x" * 3000, "n[e]+dle", True, True),
+    ],
+    ids=["literal", "unicode-casefold", "regex"],
+)
+async def test_search_preview_contains_match_and_source_columns(
+    tmp_path, prefix, query, case_sensitive, regex
+):
+    line = prefix + "needle" + " tail"
+    (tmp_path / "notes.txt").write_text(line, encoding="utf-8")
+    with StateStore(tmp_path / ".banger/state.db") as state:
+        tools = Toolbox(tmp_path, state, PermissionPolicy(tmp_path, "read-only"))
+        result = await tools.search_text(query, case_sensitive=case_sensitive, regex=regex)
+        match = result["matches"][0]
+        assert "needle" in match["text"]
+        assert match["column"] == len(prefix) + 1
+        assert match["end_column"] == len(prefix) + 7
+        start = match["preview_start_column"] - 1
+        assert match["text"] == line[start : start + 2000]
+        assert len(match["text"]) <= 2000
