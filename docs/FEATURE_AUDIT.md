@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 586 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 591 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -79,6 +79,18 @@ the missing tool. Limits are explicit: 2 MiB per file, 32 MiB read and 10,000
 discovered files per search, 200 results, 2,000 characters per preview, and 200
 reported skipped paths plus the total skipped count. Regex search is not yet
 supported. A skipped file is not evidence that its contents contain no matches.
+
+Local verification passed 591 tests with two expected POSIX-only skips in 64.26
+seconds. Lint, formatting and builds passed after correcting blocking Git setup
+in the new async test. Commit `69f184f2e380ec644fd2dcc1736de6f42732684d`
+passed all six native Windows/Linux/macOS jobs on Python 3.11 and 3.13 in
+[CI run 34747649108](https://github.com/skanga/banger/actions/runs/34747649108).
+
+A tool-name-only scan of the recorded benchmark sequences also identified
+`update_plan`, `forget`, `read_reference`, and `list_dependencies` for subsequent
+behavior review. The earlier 16-name README inventory was a sample, not a
+complete tool inventory. Graph-selection tools remain outside the agreed TUI
+scope. No reference implementation, prompts or fixture code were copied.
 
 ## Current-wheel live TUI acceptance
 
