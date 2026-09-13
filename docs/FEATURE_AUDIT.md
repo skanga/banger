@@ -75,6 +75,12 @@ counts and caused an extra diff context-prefix space inside a displayed string.
 This verifies source/diff data; terminal rendering of unusual Unicode control
 characters can still vary, and CR-only index-location agreement is unverified.
 
+Verification: all 421 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`49f9168a6295dd57b1d0b42fb9658e015f58845f` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34739770175](https://github.com/skanga/banger/actions/runs/34739770175).
+
 ## Direct Python module attribute reads
 
 Direct `import settings`, aliased imports and dotted module imports now connect
