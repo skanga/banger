@@ -72,6 +72,12 @@ inside argument lists, optional calls, executable template substitutions, module
 scripts and Unicode in adjacent Python literals. The initial six cases failed
 against the previous implementation and passed after the change.
 
+Verification: all 455 local Windows tests passed; Ruff lint/format checks and
+wheel/source builds passed. Native [CI run 34740903598](https://github.com/skanga/banger/actions/runs/34740903598)
+at application commit `e5df6fb83ec0984458c5eb0c4816b64f6acc8a63` passed all six
+Windows/Linux/macOS and Python 3.11/3.13 configurations, including tests, lint,
+format and builds. This change was not separately exercised against a live model.
+
 Limits: receiver identity and execution are not established. Dynamic or escaped
 selector values, bracket-based method access, event-handler attributes and legacy
 script MIME aliases outside the recognized set are not resolved. External files
