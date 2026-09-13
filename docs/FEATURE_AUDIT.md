@@ -70,6 +70,12 @@ and close, caught exceptions injected with `throw`, distinct invocations, and
 runtime child-call overlays recovered from persisted traces. The initial two
 cases failed because yields were recorded as returns and frame IDs changed.
 
+Verification: 490 local Windows tests passed, with Ruff lint/format checks and
+wheel/source builds. Native [CI run 34741701667](https://github.com/skanga/banger/actions/runs/34741701667)
+at application commit `7de91b029e1e8479486d5cc6d048fc420d1fcde3` passed all six
+Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
+format and builds. No live-model check was added for this trace-event change.
+
 The classifier accounts for the CPython instruction positions observed under
 tracing. This work does not distinguish coroutine/async-generator suspension,
 infer completion when the interpreter emits no terminal event, or establish
