@@ -77,6 +77,12 @@ fix; an additional embedded refresh case verifies switching from `print` to
 activation remain unresolved. Reported computed values cover unconditional
 rules alongside those explicit limitations.
 
+Verification: all 446 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`25151388f52aeb30e9b4a3762397d3b24887dff9` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34740485260](https://github.com/skanga/banger/actions/runs/34740485260).
+
 ## Compatible-provider HTTP errors
 
 OpenAI-compatible HTTP 400 responses retain their HTTP status and response body
