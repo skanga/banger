@@ -11,6 +11,7 @@ from banger.css_attributes import ATTRIBUTE, attribute_matches
 from banger.css_imports import import_path
 from banger.css_variables import CSSVariables
 from banger.discovery import discover_files
+from banger.dom import references
 from banger.index import text
 from banger.python_markup import python_fragments
 
@@ -44,6 +45,8 @@ class Document(HTMLParser):
         self.path, self.identity, self.source_offset = path, identity, offset
         self.nodes, self.stack, self.resources = [], [], []
         self.style = None
+        self.script = False
+        self.references = []
         self.unresolved = unresolved or []
         self.source_lines = source_lines
         self.line_starts = [0] + [i + 1 for i, char in enumerate(source) if char == "\n"]
@@ -75,6 +78,17 @@ class Document(HTMLParser):
             else "approximate fragment",
         }
         self.nodes.append(node)
+        if tag == "script":
+            self.script = "src" not in attributes and (
+                attributes.get("type") or ""
+            ).strip().lower() in {
+                "",
+                "module",
+                "text/javascript",
+                "application/javascript",
+                "text/ecmascript",
+                "application/ecmascript",
+            }
         relations = set(re.findall(r"[^ \t\r\n\f]+", (attributes.get("rel") or "").lower()))
         stylesheet = tag == "style" or (
             tag == "link" and "stylesheet" in relations and attributes.get("href")
@@ -119,6 +133,8 @@ class Document(HTMLParser):
         self.handle_endtag(tag)
 
     def handle_endtag(self, tag):
+        if tag == "script":
+            self.script = False
         if tag == "style" and self.style is not None:
             self.resources.append(
                 ("inline", "".join(self.style), self.style_line, self.style_lines)
@@ -131,6 +147,16 @@ class Document(HTMLParser):
                 break
 
     def handle_data(self, data):
+        if self.script:
+            start = self._source_position()
+            mapping = (
+                self.source_lines[start : start + len(data)]
+                if self.source_lines is not None
+                else None
+            )
+            self.references.extend(
+                references(data, self.path, line=self._source_line(), source_lines=mapping)
+            )
         if self.style is not None:
             self.style.append(data)
             if self.source_lines is not None:
@@ -173,6 +199,7 @@ class MarkupIndex:
             for identity, fragment, offset, source_lines, unresolved in fragments:
                 doc = Document(relative, identity, offset, fragment, source_lines, unresolved)
                 doc.feed(fragment)
+                self.references.extend(doc.references)
                 self.unresolved.extend(unresolved)
                 self.documents[identity] = doc
                 self.nodes.update({n["id"]: n for n in doc.nodes})
@@ -180,19 +207,9 @@ class MarkupIndex:
                 for node in doc.nodes:
                     self.previous_siblings[node["id"]] = previous.get(node["parent"])
                     previous[node["parent"]] = node["id"]
-            for match in re.finditer(
-                r"""(?:querySelector(All)?|getElementById)\s*\(\s*(["'])(.*?)\2\s*\)""", source
-            ):
-                selector = match.group(3)
-                if match.group().startswith("getElementById"):
-                    selector = "#" + selector
-                self.references.append(
-                    {
-                        "selector": selector,
-                        "path": relative,
-                        "line": source.count("\n", 0, match.start()) + 1,
-                    }
-                )
+            if path.suffix in {".js", ".jsx", ".ts", ".tsx"}:
+                language = {".ts": "typescript", ".tsx": "tsx"}.get(path.suffix, "javascript")
+                self.references.extend(references(source, relative, language))
         for identity, document in self.documents.items():
             self.rules[identity] = []
             self._imports_remaining = 1000

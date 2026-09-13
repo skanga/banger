@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 446 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 455 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,25 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Parsed DOM-reference candidates
+
+DOM-reference queries now inspect JavaScript/JSX and TypeScript/TSX call nodes
+instead of matching raw source text. Inline JavaScript in HTML and extracted
+Python markup uses the same parser; Python literal source maps preserve the
+original source line. Comments, string examples, longer unrelated method names,
+HTML text, JSON script blocks and ignored bodies of external scripts no longer
+produce references. Results explicitly identify themselves as syntactic candidates.
+
+Nine regression cases cover these boundaries, refresh after removal, comments
+inside argument lists, optional calls, executable template substitutions, module
+scripts and Unicode in adjacent Python literals. The initial six cases failed
+against the previous implementation and passed after the change.
+
+Limits: receiver identity and execution are not established. Dynamic or escaped
+selector values, bracket-based method access, event-handler attributes and legacy
+script MIME aliases outside the recognized set are not resolved. External files
+are workspace candidates rather than proof that a particular page loads them.
 
 ## HTML stylesheet applicability
 
