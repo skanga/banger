@@ -3,6 +3,7 @@
 from tree_sitter_language_pack import get_parser
 
 from banger.index import text, walk
+from banger.javascript_literals import string_value
 
 
 def references(source, path, language="javascript", line=1, source_lines=None):
@@ -15,26 +16,27 @@ def references(source, path, language="javascript", line=1, source_lines=None):
         arguments = node.child_by_field_name("arguments")
         if function is None or arguments is None:
             continue
-        method = (
-            function.child_by_field_name("property")
-            if function.type == "member_expression"
-            else function
-        )
-        if method is None or text(method) not in {
+        if function.type == "subscript_expression":
+            method = string_value(function.child_by_field_name("index"))
+        else:
+            method = text(
+                function.child_by_field_name("property")
+                if function.type == "member_expression"
+                else function
+            )
+        if method not in {
             "querySelector",
             "querySelectorAll",
             "getElementById",
         }:
             continue
         values = [child for child in arguments.named_children if child.type != "comment"]
-        if len(values) != 1 or values[0].type != "string":
+        if len(values) != 1:
             continue
-        literal = text(values[0])
-        # Escaped and dynamically constructed selectors require value evaluation.
-        if "\\" in literal:
+        selector = string_value(values[0])
+        if selector is None:
             continue
-        selector = literal[1:-1]
-        if text(method) == "getElementById":
+        if method == "getElementById":
             selector = "#" + selector
         position = len(data[: node.start_byte].decode("utf-8"))
         yield {

@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 455 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 481 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -58,6 +58,23 @@ Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
 
+## Constant JavaScript DOM literals
+
+DOM references decode ordinary string escapes and constant untagged templates,
+including hexadecimal/Unicode escapes, paired UTF-16 surrogates, escaped CSS
+backslashes and line continuations. Literal bracket method access and optional
+calls work in JS/JSX/TS/TSX. This is literal decoding, with no source execution.
+The rules follow the [ECMAScript string-literal specification](https://tc39.es/ecma262/multipage/ecmascript-language-lexical-grammar.html#sec-literals-string-literals).
+
+`test_dom_literals.py` adds 26 cases: 21 literal values, four language variants
+of bracket/optional calls, and invalid/dynamic boundaries. Seventeen initially
+failed with missing references; the existing negative case passed. All 21 literal
+fixtures also matched Node.js 24.20.0 in a separate controlled Windows comparison.
+Node is not an application dependency and is not used to analyze user source.
+
+Interpolated/tagged templates, nonliteral expressions and legacy numeric escapes
+remain unresolved. Receiver identity and runtime execution remain unproven.
+
 ## Parsed DOM-reference candidates
 
 DOM-reference queries now inspect JavaScript/JSX and TypeScript/TSX call nodes
@@ -78,10 +95,11 @@ at application commit `e5df6fb83ec0984458c5eb0c4816b64f6acc8a63` passed all six
 Windows/Linux/macOS and Python 3.11/3.13 configurations, including tests, lint,
 format and builds. This change was not separately exercised against a live model.
 
-Limits: receiver identity and execution are not established. Dynamic or escaped
+Limits at this checkpoint: receiver identity and execution are not established. Dynamic or escaped
 selector values, bracket-based method access, event-handler attributes and legacy
 script MIME aliases outside the recognized set are not resolved. External files
 are workspace candidates rather than proof that a particular page loads them.
+Escaped literals and literal bracket access are covered by the subsequent work above.
 
 ## HTML stylesheet applicability
 
