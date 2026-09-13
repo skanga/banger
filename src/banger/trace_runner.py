@@ -67,7 +67,7 @@ def main():
         coroutine = bool(frame.f_code.co_flags & inspect.CO_COROUTINE)
         if (generator or coroutine) and event == "call" and key in frames:
             event = "resume"
-        if (generator or coroutine) and event == "return":
+        if event == "return" and not frame.f_code.co_flags & inspect.CO_ASYNC_GENERATOR:
             opcode = dis.opname[frame.f_code.co_code[frame.f_lasti]]
             # CPython 3.13 reports suspension at the following RESUME;
             # 3.11 reports it at YIELD_VALUE itself.

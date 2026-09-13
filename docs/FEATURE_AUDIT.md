@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 501 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 507 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,22 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Ordinary function exception exits
+
+Runtime traces classify exceptional exits from ordinary Python functions as
+`unwind`, without a fabricated successful return value. The existing instruction
+classification now applies to ordinary functions as well as synchronous
+generators and native coroutines. Async-generator classification remains separate.
+
+Six real subprocess cases cover explicit exceptions, arithmetic failures and
+failed name lookup propagating through a caller, plus caught exceptions with an
+explicit None return, an implicit return, or a return from finally. The initial
+three failure cases incorrectly produced return events before the fix; handled
+exception cases continue to preserve actual return values.
+
+This is CPython trace evidence, subject to the existing event/value bounds. It
+does not add support for other language runtimes or async-generator suspension.
 
 ## Readable edit proposals
 
