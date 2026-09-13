@@ -71,6 +71,12 @@ The four signature cases first failed because variadic argument entries were
 missing. Custom objects retain type summaries without invoking their `repr`;
 long positional groups retain the existing ten-item limit.
 
+Verification: 486 local Windows tests passed, with Ruff lint/format checks and
+wheel/source builds. Native [CI run 34741392883](https://github.com/skanga/banger/actions/runs/34741392883)
+at application commit `8a73d48ad32cca1ca7c78039790eb5d3ff9b8d7e` passed all six
+Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
+format and builds. No additional live-model check was run for this tracer change.
+
 This improves Python runtime evidence only. It does not extend tracing to other
 languages or remove the existing event, depth and value-size limits.
 
