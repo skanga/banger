@@ -11,7 +11,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
 | Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
-| Forward/backward flow across calls | test_flow.py, test_flow_arguments.py, test_flow_defaults.py, test_flow_scopes.py, test_flow_imports.py; Python signatures, defaults, global/closure bindings, project from-import origins and dependency graph with evidence | Path-insensitive; ambiguous edges remain candidates; splats and decorated signatures unresolved; runtime values, module-object attribute imports and dynamic imports unverified; other languages use positional approximations |
+| Forward/backward flow across calls | test_flow.py, test_flow_arguments.py, test_flow_defaults.py, test_flow_scopes.py, test_flow_imports.py, test_flow_module_attributes.py; Python signatures, defaults, scopes, imported values and direct module attribute reads | Path-insensitive; ambiguous edges remain candidates; splats and decorated signatures unresolved; runtime values, indirectly imported module objects and dynamic imports unverified; other languages use positional approximations |
 | Markup, CSS, DOM-JS, Python-embedded markup | test_markup.py | Conditional/browser-dependent rules, computed layout and exhaustive selector/cascade semantics not implemented |
 | Syntax and semantic write gates | test_edits.py, test_batch_edits.py, test_language_edits.py; syntax and lost-binding rejection across all ten languages, combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
 | Impact and relevant tests | Matching before/after edit reports with callers, value consumers, and relevant tests; persisted by snapshot ID | Test selection can miss dynamically invoked tests; reports do not execute tests |
@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 388 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 402 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,29 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Direct Python module attribute reads
+
+Direct `import settings`, aliased imports and dotted module imports now connect
+attribute reads such as `settings.VALUE` to known assignments or imported-value
+bindings in the corresponding project module. The index persists the module's
+access name and declaration scope separately from from-imported values. AST
+expression traversal records attribute reads while excluding strings and names
+bound inside lambdas or comprehensions. The file cache version was advanced.
+
+Fourteen cases in `test_flow_module_attributes.py` verify both flow directions,
+aliases, dotted modules, parameter/assignment shadowing, lambda/comprehension
+scopes, local imports, closures, default arguments, ambiguous root/src layouts
+and persisted-index reload. Five initial cases failed before implementation;
+four exclusion cases already passed, and five scope/default/layout cases were
+added afterward. Multiple module candidates remain marked ambiguous with their
+paths; edges include the read and import locations.
+
+This remains syntactic dependency analysis. It does not prove current module
+object identity after reassignment, track arbitrary attribute writes, resolve
+module objects imported through `from package import module`, or evaluate
+dynamic import/module attribute hooks. Exact runtime search paths and execution
+order remain unverified.
 
 ## Python imported value origins
 

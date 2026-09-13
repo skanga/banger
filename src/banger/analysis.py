@@ -120,6 +120,22 @@ class FlowAnalysis:
             }
             for path, file in self.index.files.items()
         }
+        module_imports = {}
+        for path, file in self.index.files.items():
+            for imported in file.get("module_value_imports", []):
+                key = (path, binding_scope(imported["scope"], imported["name"]), imported["name"])
+                module_imports.setdefault(key, []).append(imported)
+
+        def module_candidates(module):
+            module = module.replace(".", "/")
+            return sorted(
+                {
+                    prefix + module + suffix
+                    for prefix in ("", "src/")
+                    for suffix in (".py", "/__init__.py")
+                    if prefix + module + suffix in self.index.files
+                }
+            )
 
         def variable(scope, name, path=None):
             path = self.index.symbols[scope]["path"] if scope else path
@@ -149,11 +165,40 @@ class FlowAnalysis:
             if scope is None:
                 names.update(module_names.get(path, set()))
             reads = (
-                python_reads(content)
+                python_reads(content, include_attributes=True)
                 if path.endswith(".py")
                 else set(re.findall(r"\b[A-Za-z_]\w*\b", content))
             )
             for name in sorted(reads):
+                if path.endswith(".py") and "." in name:
+                    root = name.split(".")[0]
+                    key = (path, binding_scope(scope, root), root)
+                    for imported in module_imports.get(key, []):
+                        prefix = imported["access"] + "."
+                        if not name.startswith(prefix):
+                            continue
+                        member = name[len(prefix) :]
+                        if "." in member:
+                            continue
+                        candidates = module_candidates(imported["module"])
+                        for candidate in candidates:
+                            if member not in module_names.get(candidate, set()):
+                                continue
+                            edges.append(
+                                {
+                                    "source": variable(None, member, candidate),
+                                    "target": identity,
+                                    "kind": "module attribute",
+                                    "evidence": "syntactic project module-import attribute read",
+                                    "resolution": "resolved"
+                                    if len(candidates) == 1
+                                    else "ambiguous",
+                                    "candidates": candidates,
+                                    "path": path,
+                                    "line": line,
+                                    "import_line": imported["line"],
+                                }
+                            )
                 if name in names:
                     edges.append(
                         {
@@ -166,15 +211,7 @@ class FlowAnalysis:
 
         for path, file in self.index.files.items():
             for imported in file.get("value_imports", []):
-                module = imported["module"].replace(".", "/")
-                candidates = sorted(
-                    {
-                        prefix + module + suffix
-                        for prefix in ("", "src/")
-                        for suffix in (".py", "/__init__.py")
-                        if prefix + module + suffix in self.index.files
-                    }
-                )
+                candidates = module_candidates(imported["module"])
                 for candidate in candidates:
                     if imported["member"] not in module_names.get(candidate, set()):
                         continue

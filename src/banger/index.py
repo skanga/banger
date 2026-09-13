@@ -115,7 +115,7 @@ class CodeIndex:
     def __init__(self, root: Path, state=None):
         self.root = root.resolve()
         self.state = state
-        self.files = (state.artifact("index", "files-v16") or {}) if state else {}
+        self.files = (state.artifact("index", "files-v17") or {}) if state else {}
         self.go_module = ""
         self.symbols: dict[str, dict] = {}
         self.calls: list[dict] = []
@@ -163,7 +163,7 @@ class CodeIndex:
         self._build_hierarchies()
         self._resolve_calls()
         if self.state:
-            self.state.put_artifact("index", "files-v16", self.files)
+            self.state.put_artifact("index", "files-v17", self.files)
         return {
             "files": len(self.files),
             "symbols": len(self.symbols),
@@ -408,6 +408,7 @@ class CodeIndex:
         imports = {}
         scoped_imports = {}
         value_imports = []
+        module_value_imports = []
         if language == "python":
             annotate_value_scopes(data, path, symbols)
             try:
@@ -510,6 +511,16 @@ class CodeIndex:
                             bindings[alias.asname or alias.name.split(".")[0]] = (
                                 alias.name if alias.asname else alias.name.split(".")[0]
                             )
+                            module_value_imports.append(
+                                {
+                                    "name": alias.asname or alias.name.split(".")[0],
+                                    "access": alias.asname or alias.name,
+                                    "module": alias.name,
+                                    "scope": owner["id"] if owner else None,
+                                    "path": path,
+                                    "line": node.lineno,
+                                }
+                            )
                     elif isinstance(node, ast.ImportFrom):
                         enclosing = [
                             s for s in symbols if s["line"] <= node.lineno <= s["end_line"]
@@ -549,6 +560,7 @@ class CodeIndex:
             "imports": imports,
             "scoped_imports": scoped_imports,
             "value_imports": value_imports,
+            "module_value_imports": module_value_imports,
             "references": references,
             "assignments": assignments,
             "returns": returns,

@@ -14,7 +14,7 @@ def assignment_names(node):
     return names
 
 
-def python_reads(content):
+def python_reads(content, include_attributes=False):
     try:
         # Source segments can omit the grouping parentheses around multiline expressions.
         root = ast.parse("(" + content + "\n)", mode="eval").body
@@ -23,6 +23,17 @@ def python_reads(content):
     reads = set()
 
     def visit(node, bound):
+        if (
+            include_attributes
+            and isinstance(node, ast.Attribute)
+            and isinstance(node.ctx, ast.Load)
+        ):
+            parts, base = [], node
+            while isinstance(base, ast.Attribute):
+                parts.append(base.attr)
+                base = base.value
+            if isinstance(base, ast.Name) and base.id not in bound:
+                reads.add(".".join([base.id, *reversed(parts)]))
         if isinstance(node, ast.Name):
             if isinstance(node.ctx, ast.Load) and node.id not in bound:
                 reads.add(node.id)
