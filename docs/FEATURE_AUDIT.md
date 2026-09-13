@@ -62,6 +62,33 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Live acceptance with planning and discovery tools
+
+On 2026-09-13 the current wheel was installed into the isolated Windows acceptance
+environment and every installed Python module matched the current source bytes.
+Application source was commit `74999027c6318649d34699820349f5687621b27a`;
+wheel SHA-256 was
+`82adfd73dfe1b680333e702a5fa077b57bae91b713635c3e36fe9b5cc3f8e0a7`.
+
+A live session through Textual's 120x40 test driver used the authorized local
+OpenAI-compatible model with no API key. The task required a plan, language
+reference, dependency listing and regex source search before fixing the fixture's
+fee calculation. Recorded tool calls prove use of get_plan, update_plan,
+read_reference, list_dependencies and regex search_text, alongside symbol,
+definition, caller and file queries. The model obtained edit and command approval,
+changed only the intended expression, and executed the unchanged verification file
+under tracing. Captured facts proved the two variadic argument sets, two await
+suspension/resumption pairs and final values 6 and 4. The final five-step plan
+contained only completed steps.
+
+A second app instance recovered both the exact conversation and saved plan in
+read-only mode and completed a live follow-up summary. Both clients closed
+cleanly. Diff/tool output and source contents were checked by the harness; the
+completed-chat capture was rendered locally and visually inspected for readable
+text and controls. Raw captures and history remain local. This adds live Windows
+integration evidence; it does not replace the currently unavailable native CI
+verification for the latest preview change.
+
 ## Search previews and original-source columns
 
 Long matching lines previously returned only their first 2,000 characters, which
