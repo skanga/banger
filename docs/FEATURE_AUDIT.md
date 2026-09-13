@@ -73,6 +73,13 @@ A synthetic restored conversation was captured and visually inspected, including
 headings, emphasis, inline code and lists. Captures remain local. Native terminal
 emulator rendering is still outside this headless visual check.
 
+Verification: 497 local Windows tests passed, plus Ruff lint/format checks and
+package builds. Native [CI run 34742518909](https://github.com/skanga/banger/actions/runs/34742518909)
+at application commit `be4f72529eeb854f38ca06dea39781d0b0fe3da0` passed all six
+Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
+format and builds. This renderer fix was checked with synthetic TUI responses;
+the earlier live task supplied the visual defect that prompted it.
+
 ## Live installed-wheel TUI acceptance
 
 The current installed wheel passed a Windows acceptance task through Textual's
