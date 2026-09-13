@@ -4,6 +4,7 @@ import re
 
 from banger.bindings import node_text, resolve_binding
 from banger.cpp_hierarchy import base_link as cpp_base_link
+from banger.go_hierarchy import base_link as go_base_link
 from banger.ruby_hierarchy import base_link as ruby_base_link
 from banger.rust_hierarchy import base_link as rust_base_link
 
@@ -136,6 +137,9 @@ def base_links(index, definition):
     classes = [s for s in index.symbols.values() if s["kind"] in CLASS_KINDS]
     result = []
     for expression in definition["bases"]:
+        if definition["language"] == "go":
+            result.append(go_base_link(index, definition, expression))
+            continue
         if definition["language"] == "rust":
             result.append(rust_base_link(index, definition, expression))
             continue

@@ -62,6 +62,30 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Go declared embedding
+
+Go type hierarchy queries now preserve embedded struct fields and interface type
+elements, excluding named fields and method declarations. Pointer and generic
+expressions retain their source spelling. Nominal links use matching package names
+and directories, or project-module imports with explicit aliases or the imported
+package's declared name. Each link identifies its relationship as embedding;
+the existing reverse `subclasses` collection represents reverse embedding here.
+Constraint unions stay whole and unresolved. This does not infer method promotion,
+implicit interface satisfaction, type aliases, generic constraints, or Go workspace
+and nested-module build configuration.
+
+Fourteen tests cover these forms, reverse links, persistence, refresh, duplicates,
+different packages, build directives, missing qualifiers, type-parameter shadowing,
+dot imports and local scopes. Nine initial tests failed because embedding lists
+were absent. Files with build directives or underscores in their filename remain
+conservative candidates because build selection is not evaluated; local block
+declarations remain unknown. The persisted index cache advances to `files-v21`.
+
+Local verification passed 578 tests with two expected POSIX-only skips in 67.07
+seconds. Ruff lint and formatting checks and wheel/source builds passed. The
+installed Go 1.26.5 compiler also accepted an isolated fixture with pointer,
+generic and interface embedding, with dependency downloads disabled.
+
 ## Rust declared supertraits and tool inventory review
 
 The 16 tool names sampled in the reference README each have a corresponding

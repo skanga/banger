@@ -76,6 +76,8 @@ Java, C# and TypeScript hierarchy queries preserve generic superclass/interface 
 
 Rust hierarchy queries expose declared supertraits, including `where Self` bounds, with same-file module paths and explicit aliases. Lifetimes and generic-parameter-only bounds are not superclass edges. Attributed declarations, duplicate names and external-file module mappings remain candidates or unknowns; trait implementations and full Cargo module resolution are not yet modeled.
 
+Go hierarchy queries expose declared struct/interface embedding, including pointer and generic expressions, with package and project-module import evidence. Links explicitly identify embedding; the existing `subclasses` field holds reverse embedding links. Build selection, local block scopes, type aliases, method promotion and implicit interface satisfaction remain unproven. Constraint unions remain whole unresolved expressions.
+
 Ruby hierarchy queries preserve complete superclass expressions and resolve preceding local class declarations through lexical module/class nesting and qualified or absolute constant paths. Reassigned constants, conditional/reopened classes, mixins and inherited-constant lookup remain unproven. Cross-file candidates retain uncertainty about Ruby file loading; metaprogramming and constant aliases are not evaluated.
 
 C++ hierarchy queries preserve qualified base expressions and resolve preceding class definitions in the same file's namespace and class scopes. Cross-file include visibility, template expansion, aliases, and preprocessing remain unproven and are reported as candidates or unknowns. Local classes and shadowing namespaces are kept separate.
