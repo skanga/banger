@@ -20,6 +20,8 @@ from banger.outline import source_outline
 from banger.python_scopes import annotate_value_scopes
 from banger.receivers import ReceiverBindings
 from banger.ruby_hierarchy import annotate as annotate_ruby_hierarchy
+from banger.rust_hierarchy import trait_metadata as rust_trait_metadata
+from banger.rust_hierarchy import use_bindings as rust_use_bindings
 
 LANGUAGES = {
     ".py": "python",
@@ -116,7 +118,7 @@ class CodeIndex:
     def __init__(self, root: Path, state=None):
         self.root = root.resolve()
         self.state = state
-        self.files = (state.artifact("index", "files-v19") or {}) if state else {}
+        self.files = (state.artifact("index", "files-v20") or {}) if state else {}
         self.go_module = ""
         self.symbols: dict[str, dict] = {}
         self.calls: list[dict] = []
@@ -164,7 +166,7 @@ class CodeIndex:
         self._build_hierarchies()
         self._resolve_calls()
         if self.state:
-            self.state.put_artifact("index", "files-v19", self.files)
+            self.state.put_artifact("index", "files-v20", self.files)
         return {
             "files": len(self.files),
             "symbols": len(self.symbols),
@@ -178,6 +180,8 @@ class CodeIndex:
         module_bindings = extract_bindings(language, tree.root_node)
         if language == "cpp":
             module_bindings["cpp_type_bindings"] = cpp_type_bindings(tree.root_node)
+        if language == "rust":
+            module_bindings["rust_use_bindings"] = rust_use_bindings(tree.root_node)
         symbols, calls, references, assignments, returns = [], [], [], [], []
         outlines = {}
 
@@ -274,6 +278,11 @@ class CodeIndex:
                             in {"java", "csharp", "javascript", "typescript", "tsx", "cpp"}
                             else re.findall(r"[A-Za-z_]\w*", text(bases)),
                             **(cpp_declaration_scope(node) if language == "cpp" else {}),
+                            **(
+                                rust_trait_metadata(node)
+                                if language == "rust" and node.type == "trait_item"
+                                else {}
+                            ),
                             **(
                                 generic_metadata(node)
                                 if language in {"java", "csharp", "typescript", "tsx"}

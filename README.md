@@ -74,6 +74,8 @@ Tools include definitions, symbol search, callers, call trees, paths between fun
 
 Java, C# and TypeScript hierarchy queries preserve generic superclass/interface expressions and link their nominal declarations through supported namespace/import bindings. C# distinguishes types by type-parameter count; Java raw bases can still reference generic declarations. These links do not instantiate type arguments or validate generic constraints.
 
+Rust hierarchy queries expose declared supertraits, including `where Self` bounds, with same-file module paths and explicit aliases. Lifetimes and generic-parameter-only bounds are not superclass edges. Attributed declarations, duplicate names and external-file module mappings remain candidates or unknowns; trait implementations and full Cargo module resolution are not yet modeled.
+
 Ruby hierarchy queries preserve complete superclass expressions and resolve preceding local class declarations through lexical module/class nesting and qualified or absolute constant paths. Reassigned constants, conditional/reopened classes, mixins and inherited-constant lookup remain unproven. Cross-file candidates retain uncertainty about Ruby file loading; metaprogramming and constant aliases are not evaluated.
 
 C++ hierarchy queries preserve qualified base expressions and resolve preceding class definitions in the same file's namespace and class scopes. Cross-file include visibility, template expansion, aliases, and preprocessing remain unproven and are reported as candidates or unknowns. Local classes and shadowing namespaces are kept separate.

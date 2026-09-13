@@ -62,6 +62,31 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Rust declared supertraits and tool inventory review
+
+The 16 tool names sampled in the reference README each have a corresponding
+Banger tool method. This verifies inventory correspondence, not complete
+behavioral parity: runtime tracing remains Python-specific, and static resolution
+depth differs by language. Reviewing hierarchy behavior exposed Rust traits whose
+supertrait lists were empty despite explicit declarations.
+
+Rust hierarchy queries now extract direct trait bounds and `where Self` bounds,
+preserve generic expressions, and exclude lifetime and generic-parameter-only
+bounds. Same-file local/block scopes, inline modules, self/super/crate paths and
+simple explicit aliases carry resolution evidence. Nested modules do not inherit
+unqualified outer-module item names. Attributed or duplicate traits remain
+ambiguous; type-parameter shadowing remains unknown. Matching external-file trait
+paths remain candidates until module mapping is proven. The index cache advances
+to `files-v20` so persisted projects rebuild this metadata.
+
+Thirteen regressions cover declaration order, generic and Self bounds, lifetime
+exclusion, inline modules, parent/root paths, aliases, attribute uncertainty,
+duplicates, non-trait names, type parameters, cross-file candidates, restart and
+refresh. Ten initial cases failed on missing supertrait lists; two review cases
+then exposed shadowing and missing external-file candidates. Rust trait `impl`
+relationships, Cargo targets/module declarations, grouped/glob/re-export expansion,
+macro expansion and compiler constraint validation remain incomplete.
+
 ## Parameterized superclass and interface declarations
 
 Java, C# and TypeScript hierarchy queries now separate the complete source base
