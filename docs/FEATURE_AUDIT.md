@@ -74,6 +74,13 @@ tests also passed. A synthetic replacement dialog was rendered and visually
 inspected; captures remain local. This is a readable proposal, not a computed
 pre-edit diff or a change to authorization policy.
 
+Verification: 501 local Windows tests passed, with Ruff lint/format checks and
+package builds. Native [CI run 34742785291](https://github.com/skanga/banger/actions/runs/34742785291)
+at application commit `50a854b0b7281e14f6b7312a997350070ae1c582` passed all six
+Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
+format and builds. The proposal changes were visually checked with a synthetic
+TUI fixture, without another live-model request.
+
 ## Readable Markdown in new and restored chat
 
 Assistant messages use a scoped Markdown renderer with bright, non-dim heading
