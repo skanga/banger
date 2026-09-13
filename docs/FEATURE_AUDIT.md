@@ -72,6 +72,12 @@ failed with missing references; the existing negative case passed. All 21 litera
 fixtures also matched Node.js 24.20.0 in a separate controlled Windows comparison.
 Node is not an application dependency and is not used to analyze user source.
 
+Verification: 481 local Windows tests, Ruff lint/format checks and wheel/source
+builds passed. Native [CI run 34741184249](https://github.com/skanga/banger/actions/runs/34741184249)
+at application commit `c2a690644f7c81715b9b464ce1e98c9e4b1209bf` passed all six
+Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
+format and builds. This change has no additional live-model verification.
+
 Interpolated/tagged templates, nonliteral expressions and legacy numeric escapes
 remain unresolved. Receiver identity and runtime execution remain unproven.
 
