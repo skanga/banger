@@ -74,6 +74,12 @@ token parameter. Existing successful fallback and provider round trips remain
 covered. This improves request-error reporting, not automatic remediation of
 invalid prompts or endpoint configurations.
 
+Verification: all 433 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`a5d3c15f9a18cf5bc63b4835b43d23b1cb48426b` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34740202935](https://github.com/skanga/banger/actions/runs/34740202935).
+
 ## Command launch reservation
 
 The executor reserves its command slot before awaiting subprocess creation and
