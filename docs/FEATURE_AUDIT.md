@@ -34,6 +34,34 @@ This audit preserves the user's target: an independent terminal coding agent wit
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
 5. Continue strengthening language and markup analysis where the current evidence is narrower than Benzi's described capability.
 
+## Requirements review and documentation reconciliation
+
+The requirement review preserves the agreed scope: an independent uv/Python TUI,
+the ten requested languages and markup, structured queries, gated edits and undo,
+local execution and Python tracing, durable state, both model protocols, selectable
+permissions and mandatory escalation approval. Graph UI, integrated editing and
+container execution remain governed by the user's recorded exclusions/deferrals.
+
+The README was reconciled with current source and the existing regression evidence.
+It now describes Python imported-value flow, parsed DOM literal candidates, local
+CSS imports and stylesheet applicability, readable edit proposals, restored chat
+formatting, and bounded runtime values and lifecycle events. An obsolete statement
+that imported variable aliases were not resolved was removed. DOM selectors that
+cannot be resolved are explicitly described as potentially absent from results;
+the documentation no longer implies that every dynamic selector gets a warning.
+
+Remaining work is not inferred solely from test counts. Async generators are
+explicitly excluded from the runtime exit classifier and need dedicated behavior
+tests and implementation. Static binding, hierarchy and flow depth still vary by
+language; the basic ten-language fixtures do not prove exhaustive semantics.
+Native terminal-emulator behavior and live Anthropic compatibility remain separate
+verification gaps. Existing headless/native-runner and live local-provider evidence
+does not establish either one. These distinctions keep completion unproven.
+
+This review changes documentation only. The application remains at the code
+verified by the 510-test native run recorded below; no new execution or model
+compatibility result is claimed from the documentation update.
+
 ## Python global and closure value flow
 
 The index persists compiler scope classifications from Python's standard-library

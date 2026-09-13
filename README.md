@@ -31,7 +31,7 @@ API keys can be entered in the masked setup field or supplied through `ANTHROPIC
 - **Source:** select a file in the left-hand tree to inspect it.
 - **Diffs:** inspect changes produced by the edit tools.
 - **Tools:** inspect tool arguments, results, errors, and command output.
-- **Sessions:** select a saved conversation to resume it.
+- **Sessions:** select a saved conversation to resume it, including formatted assistant messages and saved tool results.
 - **Escape:** interrupt the current task. Pending actions are marked as interrupted rather than automatically replayed.
 - **Ctrl+P:** change permission mode while retaining the current model connection.
 - **Ctrl+N:** start another conversation; remembered action approvals are cleared.
@@ -54,6 +54,8 @@ Built-in file access outside the project asks for approval except in full-access
 
 These modes follow the familiar separation between action approval and isolation described in [Claude Code's permission documentation](https://code.claude.com/docs/en/permission-modes). **Commands execute on the host with filesystem and network access.** Permission prompts do not constitute a sandbox. Container execution is deferred to a later version.
 
+Edit approvals show the proposed full content or separate old/new replacement blocks with real line breaks. Grouped deletions are labeled explicitly. These are proposals supplied by the model, not computed comparisons with the current file; the Diffs tab shows the resulting edit diffs.
+
 Native Windows execution uses cmd, and Linux/macOS execution uses bash. Bash can also be selected on Windows when a functioning bash installation is available on PATH. Commands run independently in the selected working directory; shell state does not persist between calls. Output is bounded, commands have timeouts, and cancellation terminates their process tree. Windows runners use [job objects](https://learn.microsoft.com/en-us/windows/win32/procthread/job-objects) so child processes cannot keep the command's output pipe open after the runner exits. Background descendants are not durable services.
 
 ## Code intelligence
@@ -70,7 +72,7 @@ C++ hierarchy queries preserve qualified base expressions and resolve preceding 
 
 Data-flow queries follow syntactic dependencies through arguments, assignments, returns, and subsequent calls. They preserve ambiguous call candidates and are not path-sensitive runtime proofs. Relevant tests are selected through resolved call paths and test naming conventions; tests reached only by dynamic dispatch can be missed.
 
-Module-level assignments can connect return holders to subsequent call arguments. Module values and expressions are keyed by source file, so matching names or expressions in unrelated files remain separate. This does not resolve imported variable aliases or prove assignment order across branches.
+Module-level assignments can connect return holders to subsequent call arguments. Module values and expressions are keyed by source file, so matching names or expressions in unrelated files remain separate. Python flow follows explicit `from` imports, aliases, re-export chains and direct module-attribute reads through `import` bindings. Competing module locations retain ambiguous candidates. Indirectly imported module objects, dynamic imports and assignment order across branches remain unresolved.
 
 Python expression dependencies use AST reads, excluding string text, attribute labels, keyword labels and names bound within lambdas or comprehensions. Reads in f-strings, lambda defaults and comprehension iterables remain visible. Other languages currently retain lexical expression approximations.
 
@@ -78,7 +80,11 @@ Forward/backward dependency graphs return at most 1,000 nodes and flag `truncate
 
 Python flow queries bind explicit arguments using indexed signatures, including positional-only, keyword-only and variadic parameters. Ordinary implicit-receiver calls retain their candidate resolution evidence. Omitted defaults include their declared expression, file, line and enclosing scope; this is source provenance, not the current value of a mutable default object. Dynamic splats and signatures hidden by decorators remain unresolved. Other languages currently use positional argument approximations.
 
-HTML queries include static markup embedded in Python string literals. CSS analysis covers linked document scope, specificity, source order, `!important`, inline styles, common inherited properties, and basic custom-property substitution. DOM queries locate literal `querySelector`, `querySelectorAll`, and `getElementById` selectors. Unsupported dynamic selectors, conditional rules, and missing stylesheets are reported rather than silently applied. This is not a browser layout engine.
+HTML queries include static markup embedded in Python string literals. CSS analysis covers linked document scope, specificity, source order, `!important`, inline styles, common inherited properties, and basic custom-property substitution. Unsupported CSS selectors, conditional rules, and missing stylesheets produce unresolved evidence rather than being silently applied. This is not a browser layout engine.
+
+Local unconditional CSS imports are expanded in order with imported-file provenance, cycle detection and depth/expansion limits. Disabled stylesheet links are not applied. Alternate stylesheets and media restrictions that require browser state remain unresolved.
+
+DOM queries parse `querySelector`, `querySelectorAll`, and `getElementById` calls in JavaScript/JSX, TypeScript/TSX and inline JavaScript in HTML or extracted Python markup. Comments, string examples and HTML text are excluded. Constant string escapes, untagged constant templates and literal bracket method access are supported. Results are syntactic candidates, not proof of the receiver's runtime identity or execution. Dynamic selector expressions, tagged/interpolated templates, event-handler attributes and legacy numeric escapes are not resolved and can be absent from results.
 
 Static selectors support descendant, child (`>`), adjacent-sibling (`+`) and subsequent-sibling (`~`) relationships between elements, including mixed chains. Sibling matching stays within a parent and document; text and comments do not interrupt element adjacency. These relationships follow [Selectors Level 4](https://www.w3.org/TR/selectors-4/#adjacent-sibling-combinators).
 
@@ -101,6 +107,10 @@ Undo restores the previous bytes, including original newlines. It refuses to ove
 Grouped edits undo as one operation. Restart recovery classifies unfinished groups without rewriting source files: a partially applied group can be explicitly undone if its files still match the recorded before/after bytes. Groups with conflicting external changes are preserved for manual inspection.
 
 Python runtime tracing runs the target in a separate interpreter and records calls, arguments, returns, exceptions, and parent-call relationships. Recorded dispatch augments symbol profiles only while the source hashes still match. Other languages can execute tests through their normal command-line tools, but do not have runtime tracing in this version.
+
+Argument records include positional-only, keyword-only and variadic groups. Synchronous generators and native coroutines keep invocation identities across suspension and resumption. Yields, await suspensions, successful returns and exceptional exits are distinguished; an internal exception event does not necessarily mean an exception escaped the function. Async-generator suspension is not yet classified reliably. This classification is verified on CPython 3.11 and 3.13.
+
+Trace values are bounded: strings retain up to 500 characters, supported collections up to ten entries within two nesting levels, and integers above 1,024 bits become summaries with sign and bit length. Other objects retain type summaries without calling their `repr`. The program's own values are unchanged. Traces stop recording after 10,000 events and report truncation.
 
 ## State and model adapters
 
