@@ -1,6 +1,6 @@
 # Banger
 
-Banger is an independent Python coding agent with a terminal UI, structured code queries, guarded edits, persistent project state, and local command execution. It uses uv and does not require VS Code. Neither the Benzi implementation nor mini-swe-agent code is included in Banger.
+Banger is an Python coding agent with a terminal UI, structured code queries, guarded edits, persistent project state, and local command execution. It uses uv and does not require VS Code.
 
 ## Run
 
