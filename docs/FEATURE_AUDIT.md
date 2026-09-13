@@ -81,6 +81,12 @@ module objects imported through `from package import module`, or evaluate
 dynamic import/module attribute hooks. Exact runtime search paths and execution
 order remain unverified.
 
+Verification: all 402 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`2fca19212fa72ce6da107a539a8eb366c58f7862` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34736009610](https://github.com/skanga/banger/actions/runs/34736009610).
+
 ## Python imported value origins
 
 The index separately records `from ... import ...` value bindings with alias,
