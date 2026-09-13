@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 607 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 617 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -85,6 +85,20 @@ group includes, nested-project refresh, conditional .NET references and size
 limits. Eight initial cases failed because the tool was missing. A direct check
 on Banger found its runtime, development and build groups without unresolved
 files or truncation. Other language-analysis and search-depth gaps remain open.
+
+The full local suite passed 617 tests with two expected POSIX-only skips in
+88.82 seconds; lint, formatting and builds passed. Initial CI passed the dependency
+tests on every platform, but Windows 3.13 failed an existing inherited-output-pipe
+test whose 0.2-second deadline could kill the parent wrapper before normal exit.
+The fixture now separates parent startup from a 30-second descendant lifetime,
+with a 5-second command deadline and 10-second outer bound. It explicitly checks
+normal Windows job cleanup versus POSIX group cleanup at timeout. All 19 local
+execution/dependency tests passed after this test-only correction.
+
+Native re-verification for commit `bd43afb36bf49a1759d537a83002a01942e22162`
+is pending in [CI run 34748768001](https://github.com/skanga/banger/actions/runs/34748768001).
+The run remained queued without assigned jobs at the last check; it must not be
+counted as a successful native verification yet.
 
 ## Independent built-in reference help
 
