@@ -1,6 +1,7 @@
 """Standalone tracer subprocess: no Banger installation needed in the target interpreter."""
 
 import dis
+import gc
 import hashlib
 import inspect
 import json
@@ -67,9 +68,10 @@ def main():
             return None
         generator = bool(frame.f_code.co_flags & inspect.CO_GENERATOR)
         coroutine = bool(frame.f_code.co_flags & inspect.CO_COROUTINE)
-        if (generator or coroutine) and event == "call" and key in frames:
+        async_generator = bool(frame.f_code.co_flags & inspect.CO_ASYNC_GENERATOR)
+        if (generator or coroutine or async_generator) and event == "call" and key in frames:
             event = "resume"
-        if event == "return" and not frame.f_code.co_flags & inspect.CO_ASYNC_GENERATOR:
+        if event == "return":
             opcode = dis.opname[frame.f_code.co_code[frame.f_lasti]]
             # CPython 3.13 reports suspension at the following RESUME;
             # 3.11 reports it at YIELD_VALUE itself.
@@ -80,6 +82,19 @@ def main():
             )
             if suspended and key not in pending_exceptions:
                 event = "suspend" if coroutine else "yield"
+                if async_generator:
+                    # CPython boxes direct async yields (PEP 525). Await
+                    # suspensions instead expose the awaited object's value.
+                    wrapped = (
+                        type(arg).__module__ == "builtins"
+                        and type(arg).__name__ == "async_generator_wrapped_value"
+                    )
+                    event = "yield" if wrapped else "suspend"
+                    if wrapped:
+                        # The wrapper's GC traversal exposes its sole payload
+                        # without executing user code or inspecting raw memory.
+                        values = gc.get_referents(arg)
+                        arg = values[0] if len(values) == 1 else {"unavailable": True}
             elif opcode not in {"RETURN_VALUE", "RETURN_CONST"}:
                 event = "unwind"
         if event == "call":

@@ -50,9 +50,9 @@ that imported variable aliases were not resolved was removed. DOM selectors that
 cannot be resolved are explicitly described as potentially absent from results;
 the documentation no longer implies that every dynamic selector gets a warning.
 
-Remaining work is not inferred solely from test counts. Async generators are
-explicitly excluded from the runtime exit classifier and need dedicated behavior
-tests and implementation. Static binding, hierarchy and flow depth still vary by
+Remaining work is not inferred solely from test counts. At this review, async
+generators were excluded from the runtime exit classifier; the subsequent
+async-generator checkpoint below implements and verifies that behavior. Static binding, hierarchy and flow depth still vary by
 language; the basic ten-language fixtures do not prove exhaustive semantics.
 Native terminal-emulator behavior and live Anthropic compatibility remain separate
 verification gaps. Existing headless/native-runner and live local-provider evidence
@@ -61,6 +61,21 @@ does not establish either one. These distinctions keep completion unproven.
 This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
+
+## Async-generator runtime lifecycle
+
+Async generators now retain invocation identity across awaits and direct yields.
+The tracer distinguishes suspension, resumption, yielded values, normal completion
+and exceptional exits. Direct yields use CPython's internal wrapper described in
+[PEP 525](https://peps.python.org/pep-0525/#implementation-details); GC traversal
+extracts its payload without calling user representation methods or reading raw
+memory. An unexpected wrapper payload shape is recorded as unavailable.
+
+Four subprocess regressions cover await/yield/asend and persisted trace restart,
+explicit closure, cancellation while awaiting, and athrow recovery with None and
+custom-object yields. The original two lifecycle tests failed before the change.
+This implementation depends on CPython instruction and wrapper details; other
+Python implementations and versions require separate verification.
 
 ## Python global and closure value flow
 
