@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 514 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 532 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -82,6 +82,13 @@ This does not execute Ruby or prove runtime loading, alias expansion, inherited
 constant lookup, mixin ordering, autoload or metaprogramming. Those relationships
 remain candidates or unknowns. No Ruby interpreter is installed locally, so the
 fixtures establish static query behavior rather than execution equivalence.
+
+Verification: 532 local Windows tests passed in 48.95 seconds. Ruff lint and
+format checks passed after a test-only parentheses correction; all 18 Ruby tests
+were rerun successfully. Wheel and source distribution builds passed. Commit
+`a34b5d7988f010e5aa498a195187081a19c1192d` passed all six native
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and builds: [CI run 34744242745](https://github.com/skanga/banger/actions/runs/34744242745).
 
 ## Async-generator runtime lifecycle
 
