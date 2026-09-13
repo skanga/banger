@@ -13,6 +13,8 @@ from pathlib import Path
 
 def safe_value(value, depth=0):
     # Never invoke user-defined repr/str from within a trace hook.
+    if type(value) is int and value.bit_length() > 1024:
+        return {"type": "int", "bits": value.bit_length(), "negative": value < 0, "truncated": True}
     if type(value) in {str, int, float, bool, type(None)}:
         return value[:500] if type(value) is str else value
     if depth < 2 and type(value) in {list, tuple}:

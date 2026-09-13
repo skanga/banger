@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 507 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 510 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,22 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Bounded large integer trace values
+
+Runtime tracing summarizes integers larger than 1,024 bits using type, bit length,
+sign and an explicit truncation flag. Smaller integers remain exact. This avoids
+decimal conversion of enormous values when serializing the trace, including
+values inside the supported list/dictionary depth.
+
+Two real subprocess regressions first showed a successful program ending with a
+tracer failure because a 5,001-digit positive or negative integer exceeded Python's
+serialization limit. They now verify successful execution, argument/return
+summaries, subsequent ordinary values and persisted trace recovery. A third case
+covers nested large values and exact preservation at the 1,024-bit boundary.
+
+The original program's integer values are unchanged; only recorded summaries are
+bounded. This does not remove the tracer's other event, collection and depth limits.
 
 ## Ordinary function exception exits
 
