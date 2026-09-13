@@ -9,6 +9,7 @@ import os
 import runpy
 import sys
 import threading
+from itertools import islice
 from pathlib import Path
 
 
@@ -21,7 +22,7 @@ def safe_value(value, depth=0):
     if depth < 2 and type(value) in {list, tuple}:
         return [safe_value(v, depth + 1) for v in value[:10]]
     if depth < 2 and type(value) is dict:
-        return {k: safe_value(v, depth + 1) for k, v in list(value.items())[:10] if type(k) is str}
+        return {k: safe_value(v, depth + 1) for k, v in islice(value.items(), 10) if type(k) is str}
     return {"type": type(value).__name__}
 
 

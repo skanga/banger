@@ -62,6 +62,21 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Dictionary trace capture allocation
+
+Dictionary capture previously materialized every dictionary entry before keeping
+its first ten. A regression with 300,000 entries measured 19,199,352 bytes of
+temporary allocation despite returning only ten entries. Capture now iterates
+only the first ten entries; the same local measurement used 1,080 bytes.
+The subprocess regression permits up to 200,000 bytes to accommodate runtime
+differences while rejecting allocation proportional to the input dictionary.
+
+Additional checks preserve the existing treatment of non-string keys and verify
+that a traced program retains the original 100,000-entry dictionary, returns its
+identity, and saves/restores the sampled argument and return values exactly.
+This bounds entry sampling work; it does not establish a total trace byte limit
+or change the representation of dictionary keys.
+
 ## Go declared embedding
 
 Go type hierarchy queries now preserve embedded struct fields and interface type
