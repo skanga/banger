@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 551 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 564 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -86,6 +86,12 @@ refresh. Ten initial cases failed on missing supertrait lists; two review cases
 then exposed shadowing and missing external-file candidates. Rust trait `impl`
 relationships, Cargo targets/module declarations, grouped/glob/re-export expansion,
 macro expansion and compiler constraint validation remain incomplete.
+
+Local verification passed 564 tests with two expected POSIX-only skips in 63.46
+seconds. Ruff lint and formatting checks and wheel/source builds passed.
+Commit `234be43b396df7da72f9a9e7bfe69335f4763e2a` passed all six native
+Windows/Linux/macOS jobs on Python 3.11 and 3.13 in
+[CI run 34746151617](https://github.com/skanga/banger/actions/runs/34746151617).
 
 ## Parameterized superclass and interface declarations
 
