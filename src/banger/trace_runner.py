@@ -13,17 +13,22 @@ from itertools import islice
 from pathlib import Path
 
 
+def type_metadata(cls, field):
+    # Direct built-in descriptors bypass metaclass hooks and descriptors.
+    return type.__dict__[field].__get__(cls)
+
+
 def safe_value(value, depth=0):
     # Never invoke user-defined repr/str from within a trace hook.
     if type(value) is int and value.bit_length() > 1024:
         return {"type": "int", "bits": value.bit_length(), "negative": value < 0, "truncated": True}
-    if type(value) in {str, int, float, bool, type(None)}:
+    if any(type(value) is kind for kind in (str, int, float, bool, type(None))):
         return value[:500] if type(value) is str else value
-    if depth < 2 and type(value) in {list, tuple}:
+    if depth < 2 and (type(value) is list or type(value) is tuple):
         return [safe_value(v, depth + 1) for v in value[:10]]
     if depth < 2 and type(value) is dict:
         return {k: safe_value(v, depth + 1) for k, v in islice(value.items(), 10) if type(k) is str}
-    return {"type": type(value).__name__}
+    return {"type": type_metadata(type(value), "__name__")}
 
 
 def main():
@@ -87,8 +92,8 @@ def main():
                     # CPython boxes direct async yields (PEP 525). Await
                     # suspensions instead expose the awaited object's value.
                     wrapped = (
-                        type(arg).__module__ == "builtins"
-                        and type(arg).__name__ == "async_generator_wrapped_value"
+                        type_metadata(type(arg), "__module__") == "builtins"
+                        and type_metadata(type(arg), "__name__") == "async_generator_wrapped_value"
                     )
                     event = "yield" if wrapped else "suspend"
                     if wrapped:
@@ -122,7 +127,7 @@ def main():
             record["value"] = safe_value(arg)
         elif event == "exception":
             pending_exceptions.add(key)
-            record["exception"] = arg[0].__name__
+            record["exception"] = type_metadata(arg[0], "__name__")
         if event in {"return", "unwind"}:
             frames.pop(key, None)
             pending_exceptions.discard(key)

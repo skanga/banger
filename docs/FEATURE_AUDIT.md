@@ -62,6 +62,22 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Custom type capture without metaclass callbacks
+
+Runtime value capture previously used set membership for exact-type checks and
+ordinary class attribute access for type names. These operations could invoke
+custom metaclass hashing, equality, attribute access, or descriptors inside the
+trace hook, allowing capture to interrupt an otherwise valid target program.
+Exact-type checks now use identity, and type names/modules use built-in type
+descriptors directly. Exception-name capture follows the same rule.
+
+Five subprocess regressions first reproduced failures for custom hashing,
+equality with a deliberate hash collision, attribute access, a name descriptor,
+and an exception class's name descriptor. They now verify successful execution
+and the original argument/return type summaries or handled exception name.
+Existing async-generator and large-value capture tests also passed. This covers
+these metadata callbacks, not arbitrary interpreter instrumentation interference.
+
 ## Dictionary trace capture allocation
 
 Dictionary capture previously materialized every dictionary entry before keeping
