@@ -71,6 +71,12 @@ explicit None return, an implicit return, or a return from finally. The initial
 three failure cases incorrectly produced return events before the fix; handled
 exception cases continue to preserve actual return values.
 
+Verification: 507 local Windows tests passed, with Ruff lint/format checks and
+package builds. Native [CI run 34743057376](https://github.com/skanga/banger/actions/runs/34743057376)
+at application commit `a498b169d6e3efdb7950348c9185c4a12b3a5093` passed all six
+Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
+format and builds. No additional live-model check was run for this trace change.
+
 This is CPython trace evidence, subject to the existing event/value bounds. It
 does not add support for other language runtimes or async-generator suspension.
 
