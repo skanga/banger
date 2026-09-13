@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 510 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 514 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -76,6 +76,12 @@ explicit closure, cancellation while awaiting, and athrow recovery with None and
 custom-object yields. The original two lifecycle tests failed before the change.
 This implementation depends on CPython instruction and wrapper details; other
 Python implementations and versions require separate verification.
+
+Verification: 514 local Windows tests passed in 48.94 seconds, with Ruff lint,
+format checks and wheel/source builds. Commit
+`c29f47b5c99a5f431470e3891774773b246dd91d` passed all six native
+Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
+and builds: [CI run 34743865658](https://github.com/skanga/banger/actions/runs/34743865658).
 
 ## Python global and closure value flow
 
