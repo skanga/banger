@@ -141,10 +141,14 @@ class ModelClient:
                     and "max_tokens" in body
                     and attempt < 2
                 ):
-                    data = json.loads(await response.aread())
-                    error = data.get("error", {})
+                    try:
+                        data = json.loads(await response.aread())
+                    except ValueError:
+                        data = None
+                    error = data.get("error") if isinstance(data, dict) else None
                     if (
-                        error.get("param") == "max_tokens"
+                        isinstance(error, dict)
+                        and error.get("param") == "max_tokens"
                         and error.get("code") == "unsupported_parameter"
                     ):
                         self.token_parameter = "max_completion_tokens"

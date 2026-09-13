@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 424 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 433 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,22 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Compatible-provider HTTP errors
+
+OpenAI-compatible HTTP 400 responses retain their HTTP status and response body
+even when a local endpoint or proxy returns empty/non-JSON content or an
+unexpected JSON shape. Only an explicit unsupported `max_tokens` parameter
+error triggers the existing `max_completion_tokens` fallback. Other 400 errors
+are raised without an automatic retry or configuration mutation; a subsequent
+request can succeed on the same client.
+
+Nine cases in `test_models.py` verify those boundaries and follow-up recovery.
+Seven cases failed before the fix with JSON parsing or attribute-access errors;
+two further structured-error cases ensure unrelated errors do not switch the
+token parameter. Existing successful fallback and provider round trips remain
+covered. This improves request-error reporting, not automatic remediation of
+invalid prompts or endpoint configurations.
 
 ## Command launch reservation
 

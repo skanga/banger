@@ -214,3 +214,40 @@ async def test_incomplete_stream_does_not_return_tool_calls():
     ) as client:
         with pytest.raises(RuntimeError, match="before completion"):
             await client.generate("system", [], [])
+
+
+@pytest.mark.parametrize(
+    "error_body",
+    [
+        b"",
+        b"<html>Bad request</html>",
+        b"{",
+        b"null",
+        b"[]",
+        b'{"error": "invalid request"}',
+        b'{"error": null}',
+        b'{"error": {"param": "temperature", "code": "unsupported_parameter"}}',
+        b'{"error": {"param": "max_tokens", "code": "invalid_request"}}',
+    ],
+)
+async def test_unstructured_bad_request_keeps_http_status_and_allows_followup(error_body):
+    requests = []
+
+    def respond(request):
+        requests.append(json.loads(request.content))
+        if len(requests) == 1:
+            return httpx.Response(400, content=error_body)
+        return httpx.Response(
+            200, json={"choices": [{"message": {"role": "assistant", "content": "recovered"}}]}
+        )
+
+    config = ModelConfig("openai", "local", "http://localhost/v1", stream=False)
+    async with ModelClient(config, httpx.MockTransport(respond)) as client:
+        with pytest.raises(httpx.HTTPStatusError) as failure:
+            await client.generate("system", [], [])
+        assert failure.value.response.status_code == 400
+        assert failure.value.response.content == error_body
+        assert len(requests) == 1
+        assert client.token_parameter == "max_tokens"
+        assert (await client.generate("system", [], []))["content"] == "recovered"
+        assert "max_tokens" in requests[-1]
