@@ -19,6 +19,7 @@ from banger.markup import MarkupIndex
 from banger.permissions import Action, Decision
 from banger.plans import validate_plan
 from banger.reference import read_reference
+from banger.search_worker import regex_search
 from banger.text_search import search_text
 from banger.tracing import trace_file
 
@@ -182,12 +183,22 @@ class Toolbox:
 
     @tool
     async def search_text(
-        self, query: str, path: str = ".", case_sensitive: bool = True, max_results: int = 100
+        self,
+        query: str,
+        path: str = ".",
+        case_sensitive: bool = True,
+        max_results: int = 100,
+        regex: bool = False,
     ):
-        """Search literal text in workspace UTF-8 files, honoring discovery/ignore rules. Returns line locations, bounded previews, skipped files and truncation; no regex or shell execution."""
+        """Search workspace UTF-8 lines, honoring discovery/ignore rules. Literal by default; regex=True uses Python regex with a 10-second worker limit. Returns bounded results/skips; no shell execution."""
         await self.authorize(Action("read", path=path), path)
         return await self.blocking(
-            search_text, self.root, self.policy.resolve(path), query, case_sensitive, max_results
+            regex_search if regex else search_text,
+            self.root,
+            self.policy.resolve(path),
+            query,
+            case_sensitive,
+            max_results,
         )
 
     @tool

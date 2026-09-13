@@ -62,6 +62,24 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Bounded regular-expression search
+
+`search_text` now accepts `regex=True` for Python regular expressions over physical
+UTF-8 lines. Literal search remains the default. Regex mode preserves discovery,
+file/byte/result limits and uses Python's case-insensitive matching when requested.
+A trusted isolated-interpreter worker receives JSON data, with a 10-second deadline;
+timeout terminates the worker and returns an explicit error instead of claiming
+an empty result. Windows job ownership and POSIX process groups cover worker
+descendants. Cancellation through the existing blocking-tool wrapper waits for
+the bounded worker to finish; partial regex matches are not returned on timeout.
+
+Two initial tests failed on the missing regex argument. A third failing test
+exposed a phantom final line in the shared line splitter; empty files and trailing
+newlines now have correct physical-line behavior. Eight search tests passed,
+covering ordinary/invalid regex, a pathological backtracking pattern, physical
+line boundaries and existing literal search. An installed-wheel smoke check also
+passed with the isolated worker, without making a model request.
+
 ## Static declared dependency listing
 
 The independent `list_dependencies` tool reads recognized manifests through
@@ -185,8 +203,7 @@ directory scope, binary input, invalid requests, result limits, Unicode case
 folding, oversized files and preview truncation. Three initial tests failed on
 the missing tool. Limits are explicit: 2 MiB per file, 32 MiB read and 10,000
 discovered files per search, 200 results, 2,000 characters per preview, and 200
-reported skipped paths plus the total skipped count. Regex search is not yet
-supported. A skipped file is not evidence that its contents contain no matches.
+reported skipped paths plus the total skipped count. Regex support was added in the later bounded-search milestone. A skipped file is not evidence that its contents contain no matches.
 
 Local verification passed 591 tests with two expected POSIX-only skips in 64.26
 seconds. Lint, formatting and builds passed after correcting blocking Git setup

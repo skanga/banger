@@ -1,9 +1,11 @@
-"""Bounded literal search over the workspace's discoverable UTF-8 files."""
+"""Bounded line search over the workspace's discoverable UTF-8 files."""
+
+import re
 
 from banger.discovery import discover_files
 
 
-def search_text(root, selected, query, case_sensitive, max_results):
+def search_text(root, selected, query, case_sensitive, max_results, regex=False):
     if not query or len(query) > 1000 or "\n" in query or "\r" in query:
         raise ValueError("Use a nonempty single-line literal of at most 1000 characters")
     if not 1 <= max_results <= 200:
@@ -14,6 +16,7 @@ def search_text(root, selected, query, case_sensitive, max_results):
         raise ValueError("Search path does not exist")
     result = {"matches": [], "skipped": [], "skipped_count": 0, "truncated": False}
     needle = query if case_sensitive else query.casefold()
+    pattern = re.compile(query, 0 if case_sensitive else re.IGNORECASE) if regex else None
     budget = 32 * 1024 * 1024
 
     def skip(path, reason):
@@ -45,10 +48,16 @@ def search_text(root, selected, query, case_sensitive, max_results):
         except OSError:
             skip(relative, "unreadable or changed during search")
             continue
-        for line_number, line in enumerate(
-            content.replace("\r\n", "\n").replace("\r", "\n").split("\n"), 1
-        ):
-            if needle not in (line if case_sensitive else line.casefold()):
+        lines = content.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+        if lines[-1] == "":
+            lines.pop()
+        for line_number, line in enumerate(lines, 1):
+            matched = (
+                pattern.search(line)
+                if pattern
+                else needle in (line if case_sensitive else line.casefold())
+            )
+            if not matched:
                 continue
             if len(result["matches"]) == max_results:
                 result["truncated"] = True
