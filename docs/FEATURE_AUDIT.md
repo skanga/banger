@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 605 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 607 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -78,6 +78,12 @@ with registered tool schemas, callable recovery-tool names and rejection of an
 unknown topic. The tool requires no network or project execution and is available
 in read-only mode. Dependency listing remains a separate capability gap; this
 does not claim exact equivalence to the unavailable reference implementation.
+
+Local verification passed 607 tests with two expected POSIX-only skips in 64.08
+seconds. Lint, formatting and builds passed. Commit
+`7afd8043794f9f6100c07694d5254ef08655c500` passed all six native
+Windows/Linux/macOS jobs on Python 3.11 and 3.13 in
+[CI run 34748443227](https://github.com/skanga/banger/actions/runs/34748443227).
 
 ## Persistent conversation plans
 
