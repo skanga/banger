@@ -6,8 +6,8 @@ This audit preserves the user's target: an independent terminal coding agent wit
 |---|---|---|
 | Python + uv application in the current directory | Isolated Windows wheel installation and live coding task; native CI tests/builds on all three platforms | Installed-wheel live task was Windows only |
 | Independent implementation; mini-swe-agent optional | Banger source imports no Benzi/mini-swe-agent modules | No proprietary implementation available for differential comparison |
-| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; live installed-wheel TUI workflow and 120x40 SVG rendered and visually inspected; heading contrast and restored Markdown regression tests | Windows console PTY input/output acceptance passed; terminal-emulator pixel rendering remains unverified |
-| Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Windows console keyboard/mouse and process-restart checks passed; Linux/macOS PTY and emulator-specific rendering remain unverified |
+| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; live installed-wheel TUI workflow and 120x40 SVG rendered and visually inspected; heading contrast and restored Markdown regression tests | Windows console and Linux/macOS PTY input/output acceptance passed; terminal-emulator pixel rendering remains unverified |
+| Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Windows console keyboard/mouse and process-restart checks passed; Linux/macOS PTY setup, mouse navigation and terminal cleanup passed; emulator-specific rendering remains unverified |
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
 | Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases and Ruby constant namespaces; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
@@ -62,6 +62,30 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Native Linux and macOS terminal acceptance
+
+`test_terminal_posix.py` launches the normal interactive application with stdin,
+stdout and stderr attached to a real POSIX PTY. It runs at both 80x24 and 120x40.
+Terminal keystrokes verify the missing-permission validation and explicit read-only
+selection. Terminal mouse sequences open the fixture source and session list;
+the permission picker opens and cancels by keyboard. The process exits with code
+zero, leaves the alternate screen, restores the original terminal attributes,
+and preserves fixture source bytes. The test requires no model credentials and
+does not submit a model request. Child processes and descriptors have bounded
+cleanup on failure.
+
+Commit `65cb875f29fb6f0d3c71c4ed6bce3b5b957f05da` passed all six native CI jobs.
+The logs explicitly show both PTY cases executed under Linux and macOS on Python
+3.11 and 3.13: each POSIX runner passed 542 tests. Both Windows runners passed
+540 tests and skipped these two POSIX-only cases; Windows console acceptance is
+recorded separately below. Lint, formatting and package builds passed throughout:
+[CI run 34745195748](https://github.com/skanga/banger/actions/runs/34745195748).
+
+This establishes native console transport, basic interaction and cleanup on all
+three operating systems. It does not prove every terminal emulator's pixel
+rendering, POSIX live-model tasks or exhaustive terminal interaction sequences.
+The application code is unchanged from the compact-wrapping checkpoint.
+
 ## Native Windows console acceptance and compact wrapping
 
 A real Windows console PTY reported terminal-backed stdin/stdout at 80x24.
@@ -86,8 +110,9 @@ answer. A separate compact SVG was rendered and visually inspected locally.
 The full local suite passed 540 tests in 62.64 seconds, plus Ruff lint/format and
 wheel/source builds. Raw console chunks, screenshots, fixture state and the live
 report remain local. This is console transport and interaction evidence, not a
-pixel capture from every terminal emulator. Linux/macOS native PTY interaction,
-terminal-specific rendering and live Anthropic compatibility remain unverified.
+pixel capture from every terminal emulator. At that checkpoint, Linux/macOS native PTY interaction remained unverified; the
+subsequent POSIX acceptance above closes basic interaction and cleanup coverage.
+Terminal-specific rendering and live Anthropic compatibility remain unverified.
 
 Commit `83b68c90c2b8198b5c01112fa74c7e437852cc04` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including all 540 tests, lint,

@@ -66,6 +66,8 @@ In Git workspaces, code and markup discovery uses [Git's tracked and untracked f
 
 Git must be installed and able to read a Git workspace. Discovery errors, including ownership errors, are reported without bypassing Git's trust checks or falling back to scanning ignored files. Plain folders without a Git ancestor use the filesystem scan and fixed exclusions; standalone `.gitignore` files in those folders are not interpreted.
 
+Native console interaction has been checked on Windows and in Linux/macOS PTYs. POSIX CI exercises setup, permission selection, mouse navigation and terminal cleanup at 80x24 and 120x40; emulator-specific rendering can still differ.
+
 Chat and tool output wrap to the available pane width and reflow when the terminal resizes or a hidden tab becomes visible. Restored conversations use the same wrapping and Markdown rendering.
 
 Tools include definitions, symbol search, callers, call trees, paths between functions, hierarchy, source outlines, name references, external/unresolved calls, symbol profiles, relevant-test selection, and forward/backward data-flow queries. They distinguish resolved bindings, ambiguous candidates, external imports, and unknown calls. Python import scopes and signatures have dedicated handling; explicit import bindings also cover common JavaScript/TypeScript, Go, Rust, Java, and C# forms.
