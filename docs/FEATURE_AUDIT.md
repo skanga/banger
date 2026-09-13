@@ -62,6 +62,32 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Current-wheel live TUI acceptance
+
+On 2026-09-13 the current wheel was installed into the isolated Windows acceptance
+environment. Every installed Banger Python module matched the workspace source
+byte-for-byte. The application source was commit
+`7cfa5191179aa4102a28125a5330009689661a39`; the wheel SHA-256 was
+`26ff1e2962fb7572230220410a01146da7437cbbd71291954323398ea372c925`.
+
+A live OpenAI-compatible session with the user-selected local model ran through
+Textual's test driver at 120x40. With ask mode selected, it queried definitions
+and callers, read the fixture, obtained command approval, reproduced a failing
+fee calculation, obtained edit approval, applied the fix, and obtained command
+approval to verify it. The independent verification file stayed unchanged.
+Captured runtime events proved both variadic argument sets, two await
+suspension/resumption pairs, and final results of 6 and 4. No model escalation
+occurred and the configured API key was empty.
+
+Diff/tool widgets contained output and source widget contents matched the edited
+file. A second app instance recovered the saved conversation exactly in read-only
+mode and completed a live follow-up summary. Both model clients closed cleanly.
+The completed-chat SVG was rendered locally and visually inspected: prompt,
+response, headings, navigation and controls were readable at the captured size.
+This is installed-wheel live model/TUI-driver evidence; native terminal transport
+remains covered by the separate Windows console and POSIX PTY checks below.
+Raw captures and conversation history remain local.
+
 ## Custom type capture without metaclass callbacks
 
 Runtime value capture previously used set membership for exact-type checks and
