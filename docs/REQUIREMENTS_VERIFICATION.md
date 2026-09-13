@@ -18,16 +18,17 @@ and containers are deferred. The requirements are not reopened by this audit.
   planning, reference/dependency tools, regex search, approved editing/execution,
   Python tracing and exact conversation/plan recovery. Its rendered TUI capture
   was inspected locally. Raw history/captures remain local.
-- The prior source passed six native jobs in
-  [run 34749073583](https://github.com/skanga/banger/actions/runs/34749073583).
-  That run includes dependency listing and the corrected process-lifecycle test.
-  It does not include the subsequent search-preview/column change.
+- The current application source passed all six native jobs in
+  [run 34749223405](https://github.com/skanga/banger/actions/runs/34749223405):
+  Windows, Linux and macOS on Python 3.11 and 3.13. Each job runs tests, lint,
+  formatting checks and package builds. This includes the search-preview/column
+  change.
 
 ## Requirement-to-evidence mapping
 
 | Agreed requirement | Implementation and inspected evidence | Verification boundary |
 |---|---|---|
-| Python, uv, terminal application | `pyproject.toml` launcher/dependencies; `app.py`; built and installed wheel | Windows installed-wheel live check; native build evidence for prior source |
+| Python, uv, terminal application | `pyproject.toml` launcher/dependencies; `app.py`; built and installed wheel | Windows installed-wheel live check; current-source native builds on all three platforms |
 | Independent implementation; example TUI optional | Banger's own modules, prompts and tests; reference docs/tool names used for discovery | No proprietary source comparison or benchmark-score parity claim |
 | Ten code languages and markup | `index.py`, bindings/hierarchy modules, `markup.py`; `test_language_edits.py` exercises queries, rejected syntax/lost bindings, edits, impact and restart undo for all ten | Grammar parsing plus supported static bindings; no exhaustive compiler semantics claim |
 | Structured queries and value flow | Definitions, callers, closure/paths, hierarchy, references, outlines, profile and flow tools; language/flow regression suites | Python is deepest; dynamic dispatch, macros, complex module/type systems retain documented limits |
@@ -40,21 +41,17 @@ and containers are deferred. The requirements are not reopened by this audit.
 | Mandatory stronger-model confirmation | Agent escalation and permission-policy tests | No automatic bypass in any permission mode |
 | Selectable execution/edit modes | Explicit setup selection, mode picker, permission tests, live ask/read-only tasks | Exact command/cwd remembered approvals; source-data text cannot change policy |
 | Chat, source, diff, tools, sessions, interrupt and mouse | TUI/end-to-end/wrapping tests; live driver capture; native console/PTY checks | Emulator-specific pixel rendering is not exhaustively tested |
-| Windows, Linux and macOS; applicable cmd/bash shells | Six-job native matrix; Windows console and POSIX PTY tests | Latest search-preview change still requires native verification |
+| Windows, Linux and macOS; applicable cmd/bash shells | Current source passed six-job native matrix; Windows console and POSIX PTY tests | Additional terminal emulators and OS versions are not exhaustively tested |
 | No graph, no public headless API/benchmark requirement | Interactive launcher and agreed exclusions retained | Containers and integrated editing remain deferred, not silently claimed complete |
 
-## Outstanding verification
+## Verification outcome
 
-The latest native run,
-[34749223405](https://github.com/skanga/banger/actions/runs/34749223405),
-was refused during runner allocation before tests started. The repository has
-zero configured self-hosted runners. Attempt 3 also completed with all six jobs
-refused before tests started; hosted runner availability has not been restored.
-A successful native result for the latest
-source, or another authorized native runner, is still required; earlier green
-jobs and local Windows results do not prove this final check.
+Earlier attempts were refused during runner allocation before tests started.
+After the user authorized making the repository public, the retried run completed
+successfully on all six matrix entries. Its recorded source SHA matches the
+application source above. The native verification blocker is resolved.
 
-Known analysis limits remain documented in `README.md` and `FEATURE_AUDIT.md`.
-They are not erased by the test count or this handoff. Completion remains
-unproven until the outstanding verification is resolved and the evidence is
-reviewed against this mapping.
+The agreed first version is implemented and verified against the mapping above.
+Known analysis limits remain documented in `README.md` and `FEATURE_AUDIT.md`;
+this result does not establish exact proprietary compiler parity. Containers and
+integrated source editing remain deferred as agreed.

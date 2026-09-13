@@ -2,7 +2,7 @@
 
 This audit preserves the user's target: an independent terminal coding agent with the best attempt at Benzi-equivalent capabilities. The working application is not proof of exact compiler parity.
 
-The current requirement-to-evidence mapping and outstanding verification are in
+The current requirement-to-evidence mapping and final verification result are in
 [REQUIREMENTS_VERIFICATION.md](REQUIREMENTS_VERIFICATION.md). Historical checks
 below apply to their recorded commits; they do not imply that a later change
 already has native verification.
@@ -35,7 +35,7 @@ already has native verification.
 
 1. Full local Windows suite passed: 623 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
-3. Prior source passed native Windows, Linux and macOS CI on Python 3.11 and 3.13. The latest search-preview source still requires native verification after hosted-runner allocation was refused.
+3. Current application source `74999027c6318649d34699820349f5687621b27a` passed all six native Windows, Linux and macOS jobs on Python 3.11 and 3.13 in [run 34749223405](https://github.com/skanga/banger/actions/runs/34749223405). The retry succeeded after the repository became public, resolving the earlier runner-allocation blocker.
 4. The current installed wheel passed an expanded live OpenAI-compatible coding task on 2026-09-13; see details below. Other providers remain covered by mocked tests.
 5. Continue strengthening language and markup analysis where the current evidence is narrower than Benzi's described capability.
 

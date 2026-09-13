@@ -1,6 +1,6 @@
 # Banger requirements discovery
 
-Status: product requirements resolved; implementation in progress. Library proposal approved by the user.
+Status: agreed first version implemented and verified. See [the verification handoff](docs/REQUIREMENTS_VERIFICATION.md) for evidence, analysis limits and agreed deferrals. Library proposal approved by the user.
 
 ## Confirmed requirements
 
