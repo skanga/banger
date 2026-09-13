@@ -24,6 +24,12 @@ def tool(function):
     return function
 
 
+def write_proposal(path, content):
+    if content is None:
+        return f"File: {path}\n\nDelete file"
+    return f"File: {path}\n\nProposed full content:\n\n{content}"
+
+
 class Toolbox:
     def __init__(self, root, state, policy, approve=None):
         self.root, self.state, self.policy, self.approve = root, state, policy, approve
@@ -249,16 +255,15 @@ class Toolbox:
     @tool
     async def write_file(self, path: str, content: str):
         """Create or replace UTF-8 source after syntax checks, with durable undo and impact report."""
-        await self.authorize(
-            Action("edit", path=path), json.dumps({"path": path, "content": content})
-        )
+        await self.authorize(Action("edit", path=path), write_proposal(path, content))
         return await self.blocking(self.editor.write, path, content)
 
     @tool
     async def replace_text(self, path: str, old: str, new: str):
         """Replace exactly one matching text occurrence, preserving all other content."""
         await self.authorize(
-            Action("edit", path=path), json.dumps({"path": path, "old": old, "new": new})
+            Action("edit", path=path),
+            f"File: {path}\n\nReplace this text:\n\n{old}\n\nWith this text:\n\n{new}",
         )
         return await self.blocking(self.editor.replace, path, old, new)
 
@@ -280,9 +285,7 @@ class Toolbox:
         ):
             raise ValueError("Each path must map to text or null")
         for path, content in changes.items():
-            await self.authorize(
-                Action("edit", path=path), json.dumps({"path": path, "content": content})
-            )
+            await self.authorize(Action("edit", path=path), write_proposal(path, content))
         return await self.blocking(self.editor.apply_changes, changes)
 
     @tool

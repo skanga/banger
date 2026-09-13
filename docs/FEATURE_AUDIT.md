@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 497 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 501 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,22 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Readable edit proposals
+
+Ask-mode proposals for file writes and grouped edits now display labeled full
+content with real line breaks. Exact replacements show separate old/new text
+blocks, and grouped deletions display an explicit deletion label. This uses the
+already supplied proposal, with no file reads introduced before authorization.
+The proposal is shown as literal text in the read-only approval widget.
+
+Four TUI regression cases first failed on escaped JSON or a null deletion value.
+They cover writes, replacements, grouped writes and grouped deletions, verify
+that the original file is unchanged while approval is pending, and deny each
+proposal to verify no write occurs. Existing grouped-edit and provider workflow
+tests also passed. A synthetic replacement dialog was rendered and visually
+inspected; captures remain local. This is a readable proposal, not a computed
+pre-edit diff or a change to authorization policy.
 
 ## Readable Markdown in new and restored chat
 
