@@ -1,5 +1,6 @@
 """Standalone tracer subprocess: no Banger installation needed in the target interpreter."""
 
+import dis
 import hashlib
 import inspect
 import json
@@ -31,6 +32,7 @@ def main():
     source_digests = {}
     next_id = 0
     frames = {}
+    pending_exceptions = set()
 
     def location(frame):
         filename = frame.f_code.co_filename
@@ -53,12 +55,30 @@ def main():
         path = location(frame)
         if not path or path.startswith((".venv/", "venv/")):
             return None
+        key = id(frame)
+        if event == "line":
+            pending_exceptions.discard(key)
         if event not in {"call", "return", "exception"}:
             return trace
         if len(events) >= 10000:
             truncated = True
             return None
-        key = id(frame)
+        generator = bool(frame.f_code.co_flags & inspect.CO_GENERATOR)
+        if generator and event == "call" and key in frames:
+            event = "resume"
+        if generator and event == "return":
+            opcode = dis.opname[frame.f_code.co_code[frame.f_lasti]]
+            # CPython 3.13 reports suspension at the following RESUME;
+            # 3.11 reports it at YIELD_VALUE itself.
+            suspended = opcode in {"YIELD_VALUE", "YIELD_FROM"} or (
+                opcode == "RESUME"
+                and frame.f_lasti >= 2
+                and dis.opname[frame.f_code.co_code[frame.f_lasti - 2]] == "YIELD_VALUE"
+            )
+            if suspended and key not in pending_exceptions:
+                event = "yield"
+            elif opcode not in {"RETURN_VALUE", "RETURN_CONST"}:
+                event = "unwind"
         if event == "call":
             next_id += 1
             frames[key] = next_id
@@ -79,11 +99,14 @@ def main():
                 name: safe_value(frame.f_locals.get(name))
                 for name in frame.f_code.co_varnames[:count]
             }
-        elif event == "return":
+        elif event in {"return", "yield"}:
             record["value"] = safe_value(arg)
-            frames.pop(key, None)
-        else:
+        elif event == "exception":
+            pending_exceptions.add(key)
             record["exception"] = arg[0].__name__
+        if event in {"return", "unwind"}:
+            frames.pop(key, None)
+            pending_exceptions.discard(key)
         events.append(record)
         return trace
 
