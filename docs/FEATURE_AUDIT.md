@@ -2,6 +2,11 @@
 
 This audit preserves the user's target: an independent terminal coding agent with the best attempt at Benzi-equivalent capabilities. The working application is not proof of exact compiler parity.
 
+The current requirement-to-evidence mapping and outstanding verification are in
+[REQUIREMENTS_VERIFICATION.md](REQUIREMENTS_VERIFICATION.md). Historical checks
+below apply to their recorded commits; they do not imply that a later change
+already has native verification.
+
 | Requirement | Current evidence | Remaining limits or verification |
 |---|---|---|
 | Python + uv application in the current directory | Isolated Windows wheel installation and live coding task; native CI tests/builds on all three platforms | Installed-wheel live task was Windows only |
@@ -30,8 +35,8 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 1. Full local Windows suite passed: 623 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
-3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
-4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
+3. Prior source passed native Windows, Linux and macOS CI on Python 3.11 and 3.13. The latest search-preview source still requires native verification after hosted-runner allocation was refused.
+4. The current installed wheel passed an expanded live OpenAI-compatible coding task on 2026-09-13; see details below. Other providers remain covered by mocked tests.
 5. Continue strengthening language and markup analysis where the current evidence is narrower than Benzi's described capability.
 
 ## Requirements review and documentation reconciliation
