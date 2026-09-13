@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 578 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 581 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -76,6 +76,12 @@ that a traced program retains the original 100,000-entry dictionary, returns its
 identity, and saves/restores the sampled argument and return values exactly.
 This bounds entry sampling work; it does not establish a total trace byte limit
 or change the representation of dictionary keys.
+
+Local verification passed 581 tests with two expected POSIX-only skips in 63.34
+seconds; lint, formatting and wheel/source builds passed. Commit
+`1ce3c5333b1cd69fca5bf30565f42e8889e92935` passed all six native
+Windows/Linux/macOS jobs on Python 3.11 and 3.13 in
+[CI run 34746940309](https://github.com/skanga/banger/actions/runs/34746940309).
 
 ## Go declared embedding
 
