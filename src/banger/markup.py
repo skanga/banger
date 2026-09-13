@@ -75,9 +75,24 @@ class Document(HTMLParser):
             else "approximate fragment",
         }
         self.nodes.append(node)
-        if tag == "link" and attributes.get("rel") == "stylesheet" and attributes.get("href"):
-            self.resources.append(("link", attributes["href"], node["line"], None))
-        if tag == "style":
+        relations = set(re.findall(r"[^ \t\r\n\f]+", (attributes.get("rel") or "").lower()))
+        stylesheet = tag == "style" or (
+            tag == "link" and "stylesheet" in relations and attributes.get("href")
+        )
+        restriction = None
+        if stylesheet:
+            media = (attributes.get("media") or "").strip(" \t\r\n\f")
+            if tag == "link" and "disabled" in attributes:
+                restriction = "Disabled stylesheet link is not applied"
+            elif tag == "link" and "alternate" in relations:
+                restriction = "Alternate stylesheet selection is unresolved"
+            elif media.lower() not in {"", "all"}:
+                restriction = "Conditional stylesheet media is unresolved: " + media
+            if restriction:
+                self.resources.append(("unresolved", restriction, node["line"], None))
+            elif tag == "link":
+                self.resources.append(("link", attributes["href"], node["line"], None))
+        if tag == "style" and not restriction:
             self.style = []
             self.style_lines = []
             self.style_line = node["line"] + self.get_starttag_text().count("\n")
@@ -182,6 +197,11 @@ class MarkupIndex:
             self.rules[identity] = []
             self._imports_remaining = 1000
             for kind, value, line, source_lines in document.resources:
+                if kind == "unresolved":
+                    self.rules[identity].append(
+                        {"unresolved": value, "path": document.path, "line": line}
+                    )
+                    continue
                 if kind == "inline":
                     css, source = value, document.path
                 else:

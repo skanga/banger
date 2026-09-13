@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 433 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 446 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,25 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## HTML stylesheet applicability
+
+Linked and embedded stylesheets with nontrivial `media` attributes no longer
+contribute unconditional winners. Disabled links and alternate stylesheets are
+also excluded, with explicit applicability/selection messages and source
+locations. The `stylesheet` relationship is recognized within ASCII-whitespace
+token lists and without case sensitivity. Missing/empty media and `all` retain
+ordinary application. This follows the relevant
+[HTML stylesheet rules](https://html.spec.whatwg.org/multipage/links.html#link-type-stylesheet)
+and [media-attribute requirements](https://html.spec.whatwg.org/multipage/semantics.html#processing-the-media-attribute).
+
+Thirteen cases in `test_stylesheet_applicability.py` cover linked/embedded media,
+disabled boolean attributes, alternate selection, rel tokens, source locations
+and refresh of Python-embedded markup. Twelve initial cases failed before the
+fix; an additional embedded refresh case verifies switching from `print` to
+`all`. Media-query evaluation, browser stylesheet-set selection and script-driven
+activation remain unresolved. Reported computed values cover unconditional
+rules alongside those explicit limitations.
 
 ## Compatible-provider HTTP errors
 
