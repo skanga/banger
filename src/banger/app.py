@@ -38,6 +38,7 @@ from banger.models import ModelClient, ModelConfig
 from banger.permissions import Mode, PermissionPolicy
 from banger.state import StateStore
 from banger.tools import Toolbox
+from banger.wrapped_log import WrappedLog
 
 
 class Setup(ModalScreen):
@@ -244,7 +245,7 @@ class BangerApp(App):
             yield ProjectTree(self.root, id="files")
             with TabbedContent(id="tabs"):
                 with TabPane("Chat", id="chat-tab"):
-                    yield RichLog(id="chat-log", wrap=True)
+                    yield WrappedLog(id="chat-log")
                     yield Static("", id="draft", markup=False)
                     yield Input(
                         placeholder="Ask Banger to inspect, change, or debug your project…",
@@ -255,7 +256,7 @@ class BangerApp(App):
                 with TabPane("Diffs", id="diff-tab"):
                     yield RichLog(id="diff-log", wrap=False)
                 with TabPane("Tools", id="tools-tab"):
-                    yield RichLog(id="tool-log", wrap=True)
+                    yield WrappedLog(id="tool-log")
                 with TabPane("Sessions", id="sessions-tab"):
                     yield ListView(id="sessions")
         yield Static("Choose a model and permission mode to begin", id="status", markup=False)

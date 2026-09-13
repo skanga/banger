@@ -66,6 +66,8 @@ In Git workspaces, code and markup discovery uses [Git's tracked and untracked f
 
 Git must be installed and able to read a Git workspace. Discovery errors, including ownership errors, are reported without bypassing Git's trust checks or falling back to scanning ignored files. Plain folders without a Git ancestor use the filesystem scan and fixed exclusions; standalone `.gitignore` files in those folders are not interpreted.
 
+Chat and tool output wrap to the available pane width and reflow when the terminal resizes or a hidden tab becomes visible. Restored conversations use the same wrapping and Markdown rendering.
+
 Tools include definitions, symbol search, callers, call trees, paths between functions, hierarchy, source outlines, name references, external/unresolved calls, symbol profiles, relevant-test selection, and forward/backward data-flow queries. They distinguish resolved bindings, ambiguous candidates, external imports, and unknown calls. Python import scopes and signatures have dedicated handling; explicit import bindings also cover common JavaScript/TypeScript, Go, Rust, Java, and C# forms.
 
 Ruby hierarchy queries preserve complete superclass expressions and resolve preceding local class declarations through lexical module/class nesting and qualified or absolute constant paths. Reassigned constants, conditional/reopened classes, mixins and inherited-constant lookup remain unproven. Cross-file candidates retain uncertainty about Ruby file loading; metaprogramming and constant aliases are not evaluated.

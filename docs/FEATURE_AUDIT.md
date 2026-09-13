@@ -6,8 +6,8 @@ This audit preserves the user's target: an independent terminal coding agent wit
 |---|---|---|
 | Python + uv application in the current directory | Isolated Windows wheel installation and live coding task; native CI tests/builds on all three platforms | Installed-wheel live task was Windows only |
 | Independent implementation; mini-swe-agent optional | Banger source imports no Benzi/mini-swe-agent modules | No proprietary implementation available for differential comparison |
-| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; live installed-wheel TUI workflow and 120x40 SVG rendered and visually inspected; heading contrast and restored Markdown regression tests | Headless Textual driver, not a native terminal recording |
-| Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Native terminal emulators can differ from headless interaction tests |
+| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; live installed-wheel TUI workflow and 120x40 SVG rendered and visually inspected; heading contrast and restored Markdown regression tests | Windows console PTY input/output acceptance passed; terminal-emulator pixel rendering remains unverified |
+| Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Windows console keyboard/mouse and process-restart checks passed; Linux/macOS PTY and emulator-specific rendering remain unverified |
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
 | Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases and Ruby constant namespaces; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 532 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 540 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -61,6 +61,33 @@ does not establish either one. These distinctions keep completion unproven.
 This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
+
+## Native Windows console acceptance and compact wrapping
+
+A real Windows console PTY reported terminal-backed stdin/stdout at 80x24.
+Banger's normal interactive launcher was driven with keyboard and terminal mouse
+input in an isolated fixture. Setup selected read-only mode; the authorized local
+OpenAI-compatible model used query/file tools and correctly reported the fixture
+function's return value. The exact prompt and eight-message tool conversation
+persisted, and the source stayed unchanged. The permission picker opened and
+cancelled by keyboard; mouse input opened source and session panes. A fresh
+process restored the saved conversation through the session list. Three native
+runs exited cleanly with code zero.
+
+The first native replay exposed truncated middle words in narrow chat panes:
+RichLog's default 78-column floor exceeded the available width. Eight regression
+cases now verify visible user, restored-user, assistant and tool text at 80x24,
+both directly and after shrinking from 120x40. The original three tests failed
+on missing visible words; subsequent tests exposed hidden-tab and resize cases.
+WrappedLog retains renderables for reflow and waits for a usable pane width when
+hidden. A corrected native replay displayed the complete restored prompt and
+answer. A separate compact SVG was rendered and visually inspected locally.
+
+The full local suite passed 540 tests in 62.64 seconds, plus Ruff lint/format and
+wheel/source builds. Raw console chunks, screenshots, fixture state and the live
+report remain local. This is console transport and interaction evidence, not a
+pixel capture from every terminal emulator. Linux/macOS native PTY interaction,
+terminal-specific rendering and live Anthropic compatibility remain unverified.
 
 ## Ruby superclass constant bindings
 
