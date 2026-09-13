@@ -6,7 +6,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 |---|---|---|
 | Python + uv application in the current directory | Isolated Windows wheel installation and live coding task; native CI tests/builds on all three platforms | Installed-wheel live task was Windows only |
 | Independent implementation; mini-swe-agent optional | Banger source imports no Benzi/mini-swe-agent modules | No proprietary implementation available for differential comparison |
-| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; regenerated 120x40 SVG rendered and visually inspected | Snapshot uses deterministic model responses; not a live terminal recording |
+| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; live installed-wheel TUI workflow and 120x40 SVG rendered and visually inspected | Headless Textual driver, not a native terminal recording; resumed Markdown headings need better contrast |
 | Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Native terminal emulators can differ from headless interaction tests |
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
@@ -57,6 +57,28 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Live installed-wheel TUI acceptance
+
+The current installed wheel passed a Windows acceptance task through Textual's
+120x40 headless driver using the user-selected OpenAI-compatible local model.
+The live task exercised setup, Ask-mode edit and execution approvals, correction
+of a Python calculation, and successful execution of an unchanged verification
+file. Recorded traces confirmed variadic inputs, coroutine suspension/resumption
+and final values.
+
+After application shutdown, the Sessions tab restored the exact saved history.
+A subsequent live request in Read-only mode correctly summarized the earlier
+fix and verification. Both application instances closed their HTTP clients.
+Diff/tool views and source-widget content were checked. Captured approval, diff,
+completed and resumed screens were visually inspected; raw captures and detailed
+reports remain local and are not included in this repository.
+
+Remaining visual issue: Markdown headings in the resumed chat have poor contrast
+on the dark background. This single live Python task does not prove live
+Anthropic compatibility, native-terminal rendering, or complete static-analysis
+parity. Application source is unchanged; the 495-test native matrix remains the
+applicable code verification.
 
 ## Coroutine trace lifecycle
 
