@@ -1,6 +1,7 @@
 """Standalone tracer subprocess: no Banger installation needed in the target interpreter."""
 
 import hashlib
+import inspect
 import json
 import os
 import runpy
@@ -72,6 +73,8 @@ def main():
         }
         if event == "call":
             count = frame.f_code.co_argcount + frame.f_code.co_kwonlyargcount
+            count += bool(frame.f_code.co_flags & inspect.CO_VARARGS)
+            count += bool(frame.f_code.co_flags & inspect.CO_VARKEYWORDS)
             record["arguments"] = {
                 name: safe_value(frame.f_locals.get(name))
                 for name in frame.f_code.co_varnames[:count]

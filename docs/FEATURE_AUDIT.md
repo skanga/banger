@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 481 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 486 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,22 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Variadic Python runtime arguments
+
+The standalone runtime tracer now captures `*args` and `**kwargs` alongside
+positional-only, ordinary and keyword-only arguments. It uses the executing code
+object's argument flags, so local variables are not mistaken for inputs. Existing
+bounded value summaries apply to the new groups as well.
+
+Five subprocess regression cases cover each variadic group, mixed/default/empty
+signatures, restart persistence, and method arguments containing custom objects.
+The four signature cases first failed because variadic argument entries were
+missing. Custom objects retain type summaries without invoking their `repr`;
+long positional groups retain the existing ten-item limit.
+
+This improves Python runtime evidence only. It does not extend tracing to other
+languages or remove the existing event, depth and value-size limits.
 
 ## Constant JavaScript DOM literals
 
