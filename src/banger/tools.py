@@ -17,6 +17,7 @@ from banger.index import CodeIndex
 from banger.markup import MarkupIndex
 from banger.permissions import Action, Decision
 from banger.plans import validate_plan
+from banger.reference import read_reference
 from banger.text_search import search_text
 from banger.tracing import trace_file
 
@@ -139,6 +140,11 @@ class Toolbox:
             return await function(**arguments)
         except (ValueError, TypeError, OSError, RuntimeError) as exc:
             return {"error": str(exc)}
+
+    @tool
+    async def read_reference(self, topic: str = "overview"):
+        """Read Banger's built-in help: overview, languages, artifact recovery, or current tool contracts. No network or project execution."""
+        return read_reference(topic, self.schemas())
 
     @tool
     async def list_files(self, directory: str = "."):

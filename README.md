@@ -134,6 +134,8 @@ Project facts can be saved with `remember_fact`, listed with `recall_memory`, an
 
 `update_plan` and `get_plan` maintain a plan for the current conversation, including in read-only mode. Plans contain pending, in-progress and completed steps, with at most one active step. They survive restarts, remain separate between conversations, and are supplied to the model on resumed turns. Plan updates appear in the Tools tab. An empty plan clears the current steps.
 
+`read_reference` gives the agent built-in help for `languages`, `artifact` recovery, and current `tools` contracts; `overview` lists the topics. Language extensions and tool schemas come from the running implementation. The help states analysis limits and requires no network or project execution.
+
 The provider adapters implement [Anthropic tool-use messages](https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls) and [OpenAI-compatible Chat Completions messages](https://developers.openai.com/api/reference/cli/resources/chat). Streaming tool arguments are assembled before execution. Interrupted or truncated responses are not executed. Response and tool-call structures are validated before saving the assistant message or running any tool in the batch. Valid calls execute sequentially; a later runtime failure does not roll back earlier calls. Transient server and connection failures have bounded retries. There is no subscription-account login integration.
 
 Recovery pairs tool results with call occurrences, so a reused ID in a later response cannot hide an interrupted call. Duplicate IDs within one response, blank IDs and non-string IDs are rejected before tools run. Large outputs use independent artifact IDs to preserve earlier results when a model reuses a call ID.

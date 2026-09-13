@@ -62,6 +62,23 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Independent built-in reference help
+
+Recorded reference-agent calls use `read_reference` with language and artifact
+topics; the checkout does not expose that tool's implementation. Banger now
+provides its own independently written reference help for overview, languages,
+artifact recovery and tool contracts. Language extensions come from the actual
+parser mapping, and tool contracts come from the actual registered schemas.
+Help explicitly identifies Python-only tracing, static-analysis uncertainty,
+markup limits, recovery tools and the limits of snapshot undo.
+
+Two regressions first failed because the tool was absent. They now verify
+language extensions, Python-only tracing, discoverable topics, exact agreement
+with registered tool schemas, callable recovery-tool names and rejection of an
+unknown topic. The tool requires no network or project execution and is available
+in read-only mode. Dependency listing remains a separate capability gap; this
+does not claim exact equivalence to the unavailable reference implementation.
+
 ## Persistent conversation plans
 
 The independent `update_plan` and `get_plan` tools provide session-scoped plans.
