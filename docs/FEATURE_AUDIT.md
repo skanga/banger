@@ -71,6 +71,12 @@ serialization limit. They now verify successful execution, argument/return
 summaries, subsequent ordinary values and persisted trace recovery. A third case
 covers nested large values and exact preservation at the 1,024-bit boundary.
 
+Verification: 510 local Windows tests passed, with Ruff lint/format checks and
+package builds. Native [CI run 34743256962](https://github.com/skanga/banger/actions/runs/34743256962)
+at application commit `191599dc253240c1a101a32f49d06b9325e13e40` passed all six
+Windows/Linux/macOS × Python 3.11/3.13 configurations, including tests, lint,
+format and builds. No live-model check was added for this serialization fix.
+
 The original program's integer values are unchanged; only recorded summaries are
 bounded. This does not remove the tracer's other event, collection and depth limits.
 
