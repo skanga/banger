@@ -10,7 +10,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 | Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Native terminal emulators can differ from headless interaction tests |
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
-| Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
+| Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases and Ruby constant namespaces; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
 | Forward/backward flow across calls | test_flow.py, test_flow_arguments.py, test_flow_defaults.py, test_flow_scopes.py, test_flow_imports.py, test_flow_module_attributes.py; Python signatures, defaults, scopes, imported values and direct module attribute reads | Path-insensitive; ambiguous edges remain candidates; splats and decorated signatures unresolved; runtime values, indirectly imported module objects and dynamic imports unverified; other languages use positional approximations |
 | Markup, CSS, DOM-JS, Python-embedded markup | test_markup.py | Conditional/browser-dependent rules, computed layout and exhaustive selector/cascade semantics not implemented |
 | Syntax and semantic write gates | test_edits.py, test_batch_edits.py, test_language_edits.py; syntax and lost-binding rejection across all ten languages, combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
@@ -61,6 +61,27 @@ does not establish either one. These distinctions keep completion unproven.
 This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
+
+## Ruby superclass constant bindings
+
+Hierarchy queries now retain complete Ruby superclass expressions, including
+qualified and absolute constant paths. Local preceding declarations resolve
+through lexical class/module nesting. Qualified class declarations preserve
+Ruby's distinct lexical nesting rather than treating the namespace path as
+additional lexical scopes. This follows the documented distinction in
+[Ruby's module/class syntax](https://docs.ruby-lang.org/en/3.4/syntax/modules_and_classes_rdoc.html).
+
+Eighteen tests cover top-level and nested bases, namespace shadowing, absolute
+paths, qualified class declarations, computed bases, reassignment, conditional
+and reopened declarations, mixins, inherited-constant uncertainty, cross-file
+candidates and persisted refresh. Nine initial tests failed before implementation;
+two review regressions then exposed global fallback and lost cross-file candidates.
+The index cache advanced to `files-v18` to rebuild persisted Ruby metadata.
+
+This does not execute Ruby or prove runtime loading, alias expansion, inherited
+constant lookup, mixin ordering, autoload or metaprogramming. Those relationships
+remain candidates or unknowns. No Ruby interpreter is installed locally, so the
+fixtures establish static query behavior rather than execution equivalence.
 
 ## Async-generator runtime lifecycle
 

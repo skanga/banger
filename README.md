@@ -68,6 +68,8 @@ Git must be installed and able to read a Git workspace. Discovery errors, includ
 
 Tools include definitions, symbol search, callers, call trees, paths between functions, hierarchy, source outlines, name references, external/unresolved calls, symbol profiles, relevant-test selection, and forward/backward data-flow queries. They distinguish resolved bindings, ambiguous candidates, external imports, and unknown calls. Python import scopes and signatures have dedicated handling; explicit import bindings also cover common JavaScript/TypeScript, Go, Rust, Java, and C# forms.
 
+Ruby hierarchy queries preserve complete superclass expressions and resolve preceding local class declarations through lexical module/class nesting and qualified or absolute constant paths. Reassigned constants, conditional/reopened classes, mixins and inherited-constant lookup remain unproven. Cross-file candidates retain uncertainty about Ruby file loading; metaprogramming and constant aliases are not evaluated.
+
 C++ hierarchy queries preserve qualified base expressions and resolve preceding class definitions in the same file's namespace and class scopes. Cross-file include visibility, template expansion, aliases, and preprocessing remain unproven and are reported as candidates or unknowns. Local classes and shadowing namespaces are kept separate.
 
 Data-flow queries follow syntactic dependencies through arguments, assignments, returns, and subsequent calls. They preserve ambiguous call candidates and are not path-sensitive runtime proofs. Relevant tests are selected through resolved call paths and test naming conventions; tests reached only by dynamic dispatch can be missed.
