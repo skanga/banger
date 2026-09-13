@@ -62,6 +62,30 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Static declared dependency listing
+
+The independent `list_dependencies` tool reads recognized manifests through
+workspace discovery, without running package managers or evaluating build code.
+It extracts Python project/build/development groups and requirements lines,
+Node dependency groups, Cargo dependency tables (including nested target/workspace
+tables), Go require declarations, Maven dependency elements and NuGet package
+references/versions. Results preserve source paths, groups, raw version expressions
+and .NET ancestor attributes such as conditions.
+
+The result explicitly describes declarations rather than installed or resolved
+dependencies. Includes, conditions, workspace inheritance, properties, overrides,
+transitive dependencies and lockfile resolution are not evaluated. Recognized
+unsupported manifests, such as Gemfile and executable build files, and malformed
+or oversized manifests are reported as unresolved. Discovery is bounded to 100
+recognized manifests, 1 MiB per file and 4 MiB read per query; truncation is explicit.
+This is not an exhaustive recognizer for every dependency format.
+
+Ten tests cover seven manifest forms, malformed and executable inputs, Python
+group includes, nested-project refresh, conditional .NET references and size
+limits. Eight initial cases failed because the tool was missing. A direct check
+on Banger found its runtime, development and build groups without unresolved
+files or truncation. Other language-analysis and search-depth gaps remain open.
+
 ## Independent built-in reference help
 
 Recorded reference-agent calls use `read_reference` with language and artifact

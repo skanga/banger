@@ -10,6 +10,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from banger.analysis import FlowAnalysis
+from banger.dependencies import list_dependencies
 from banger.discovery import EXCLUDED
 from banger.edits import Editor
 from banger.execution import Executor
@@ -140,6 +141,11 @@ class Toolbox:
             return await function(**arguments)
         except (ValueError, TypeError, OSError, RuntimeError) as exc:
             return {"error": str(exc)}
+
+    @tool
+    async def list_dependencies(self):
+        """Read declared dependency groups from discoverable project manifests. Reports unsupported/malformed files; does not install, resolve, or execute build code."""
+        return await self.blocking(list_dependencies, self.root)
 
     @tool
     async def read_reference(self, topic: str = "overview"):
