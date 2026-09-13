@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 617 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 620 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -79,6 +79,13 @@ newlines now have correct physical-line behavior. Eight search tests passed,
 covering ordinary/invalid regex, a pathological backtracking pattern, physical
 line boundaries and existing literal search. An installed-wheel smoke check also
 passed with the isolated worker, without making a model request.
+
+The full local suite passed 620 tests with two expected POSIX-only skips in 96.23
+seconds. Lint, formatting and package builds passed. Native verification for
+commit `c4a526227146cdb58c35bc6378289db3b6cc70a0` is pending in
+[CI run 34749073583](https://github.com/skanga/banger/actions/runs/34749073583).
+At the last check, both this run and the earlier lifecycle-test verification were
+queued. Neither is counted as a successful native verification.
 
 ## Static declared dependency listing
 
