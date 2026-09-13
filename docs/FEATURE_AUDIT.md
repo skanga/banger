@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 620 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 623 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -76,6 +76,15 @@ They now cover literal, Unicode case-folded and regex queries, snippet/source
 agreement and column positions. All 11 search tests passed. Matches larger than
 the preview can still be truncated; the source span and truncation marker remain
 available for targeted inspection.
+
+The full local suite passed 623 tests with two expected POSIX-only skips in 99.79
+seconds. Lint, formatting and builds passed. Native verification for commit
+`74999027c6318649d34699820349f5687621b27a` could not execute:
+[CI run 34749223405](https://github.com/skanga/banger/actions/runs/34749223405)
+was refused during hosted-runner allocation before test execution. This is not
+a test failure or a successful native verification. The previous source commit's
+six-platform-job evidence remains recorded below; the preview change still needs
+native verification when runners are available.
 
 ## Bounded regular-expression search
 
