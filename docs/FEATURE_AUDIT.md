@@ -70,6 +70,12 @@ cancelled launch. Existing timeout and process-termination tests remain covered.
 The reservation applies to one executor in its event loop; it is not a
 system-wide process lock or an execution sandbox.
 
+Verification: all 424 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`35de7edc6715fb26be6f65b74335694ff5bd6b40` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34739993845](https://github.com/skanga/banger/actions/runs/34739993845).
+
 ## Physical source lines and edit diffs
 
 `read_file` now enumerates physical file lines, retaining Unicode separators,
