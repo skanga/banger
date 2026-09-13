@@ -6,7 +6,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 |---|---|---|
 | Python + uv application in the current directory | Isolated Windows wheel installation and live coding task; native CI tests/builds on all three platforms | Installed-wheel live task was Windows only |
 | Independent implementation; mini-swe-agent optional | Banger source imports no Benzi/mini-swe-agent modules | No proprietary implementation available for differential comparison |
-| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; live installed-wheel TUI workflow and 120x40 SVG rendered and visually inspected | Headless Textual driver, not a native terminal recording; resumed Markdown headings need better contrast |
+| Terminal UI; no graph | app.py, test_tui.py, test_end_to_end.py; live installed-wheel TUI workflow and 120x40 SVG rendered and visually inspected; heading contrast and restored Markdown regression tests | Headless Textual driver, not a native terminal recording |
 | Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Native terminal emulators can differ from headless interaction tests |
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 495 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 497 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -58,6 +58,21 @@ Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
 
+## Readable Markdown in new and restored chat
+
+Assistant messages use a scoped Markdown renderer with bright, non-dim heading
+colors suited to the dark chat surface. All six heading levels preserve their
+formatting. Restored assistant messages use the same renderer as new responses;
+user messages remain literal text. The theme override is scoped to rendering
+instead of changing the application's shared console theme permanently.
+
+Two TUI regression cases first failed for dark heading colors and raw Markdown
+in restored messages. They now check all six rendered heading levels for visible
+contrast and formatting through both new-message and session-selection paths.
+A synthetic restored conversation was captured and visually inspected, including
+headings, emphasis, inline code and lists. Captures remain local. Native terminal
+emulator rendering is still outside this headless visual check.
+
 ## Live installed-wheel TUI acceptance
 
 The current installed wheel passed a Windows acceptance task through Textual's
@@ -74,8 +89,8 @@ Diff/tool views and source-widget content were checked. Captured approval, diff,
 completed and resumed screens were visually inspected; raw captures and detailed
 reports remain local and are not included in this repository.
 
-Remaining visual issue: Markdown headings in the resumed chat have poor contrast
-on the dark background. This single live Python task does not prove live
+The visual issue found here (poor heading contrast and raw restored Markdown)
+was corrected by the subsequent rendering work above. This single live Python task does not prove live
 Anthropic compatibility, native-terminal rendering, or complete static-analysis
 parity. Application source is unchanged; the 495-test native matrix remains the
 applicable code verification.

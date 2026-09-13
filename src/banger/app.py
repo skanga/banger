@@ -6,7 +6,6 @@ import os
 from pathlib import Path
 from typing import ClassVar
 
-from rich.markdown import Markdown as RichMarkdown
 from rich.syntax import Syntax
 from rich.text import Text
 from textual.app import App, ComposeResult
@@ -33,6 +32,7 @@ from textual.widgets import (
 from textual.worker import WorkerCancelled, WorkerFailed
 
 from banger.agent import Agent
+from banger.chat_markdown import ChatMarkdown
 from banger.discovery import EXCLUDED
 from banger.models import ModelClient, ModelConfig
 from banger.permissions import Mode, PermissionPolicy
@@ -366,13 +366,13 @@ class BangerApp(App):
         elif event.kind == "status":
             self._status(event.payload)
         elif event.kind == "done":
-            self.query_one("#chat-log", RichLog).write(RichMarkdown(event.payload))
+            self.query_one("#chat-log", RichLog).write(ChatMarkdown(event.payload))
             self.draft = ""
             self.query_one("#draft", Static).update("")
             self._status("Ready")
         elif event.kind == "tool_start":
             if self.draft:
-                self.query_one("#chat-log", RichLog).write(RichMarkdown(self.draft))
+                self.query_one("#chat-log", RichLog).write(ChatMarkdown(self.draft))
                 self.draft = ""
                 self.query_one("#draft", Static).update("")
             self._status("Running " + event.payload["name"])
@@ -425,7 +425,10 @@ class BangerApp(App):
         }
         for message in self.agent.messages:
             if message["role"] in {"user", "assistant"} and message.get("content"):
-                log.write(Text(message["role"] + " › " + message["content"]))
+                if message["role"] == "assistant":
+                    log.write(ChatMarkdown(message["content"]))
+                else:
+                    log.write(Text("You › " + message["content"], style="bold #81d8bd"))
             elif message["role"] == "tool":
                 try:
                     result = json.loads(message["content"])
