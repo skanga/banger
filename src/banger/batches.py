@@ -1,7 +1,8 @@
 """Coordinated gated edits with grouped snapshots and compensating recovery."""
 
-import difflib
 from pathlib import Path
+
+from banger.diffs import file_diff
 
 
 class BatchEdits:
@@ -93,18 +94,7 @@ class BatchEdits:
             self.state.put_artifact(
                 "edit-impact", str(snapshot["id"]), {"before": impacts[path], "after": after_impact}
             )
-            diff = "".join(
-                difflib.unified_diff(
-                    (before[path] or b"")
-                    .decode("utf-8", errors="replace")
-                    .splitlines(keepends=True),
-                    (proposed[path] or b"")
-                    .decode("utf-8", errors="replace")
-                    .splitlines(keepends=True),
-                    fromfile=labels[path],
-                    tofile=labels[path],
-                )
-            )
+            diff = file_diff(labels[path], before[path], proposed[path])
             edits.append(
                 {
                     "path": labels[path],

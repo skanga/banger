@@ -1,12 +1,12 @@
 """Atomic edits and persistent undo; invoked after tool authorization."""
 
-import difflib
 import os
 import tempfile
 from pathlib import Path
 
 from banger.analysis import FlowAnalysis
 from banger.batches import BatchEdits
+from banger.diffs import file_diff
 
 
 class Editor:
@@ -127,14 +127,7 @@ class Editor:
         self.state.put_artifact(
             "edit-impact", str(snapshot), {"before": impact_before, "after": impact_after}
         )
-        diff = "".join(
-            difflib.unified_diff(
-                (before or b"").decode("utf-8", errors="replace").splitlines(keepends=True),
-                (after or b"").decode("utf-8", errors="replace").splitlines(keepends=True),
-                fromfile=str(path),
-                tofile=str(path),
-            )
-        )
+        diff = file_diff(path, before, after)
         return {
             "snapshot": snapshot,
             "diff": diff,

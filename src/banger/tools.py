@@ -149,13 +149,15 @@ class Toolbox:
         await self.authorize(Action("read", path=path), path)
         if start < 1 or end < start or end - start > 1000:
             raise ValueError("Select 1-based lines, at most 1001 per read")
-        lines = self.policy.resolve(path).read_text(encoding="utf-8", errors="replace").splitlines()
+        selected, total = [], 0
+        with self.policy.resolve(path).open(encoding="utf-8", errors="replace") as source:
+            for total, line in enumerate(source, start=1):
+                if start <= total <= end:
+                    selected.append(f"{total}: " + line.removesuffix("\n"))
         return {
             "path": path,
-            "total_lines": len(lines),
-            "source": "\n".join(
-                f"{i + 1}: {lines[i]}" for i in range(start - 1, min(end, len(lines)))
-            ),
+            "total_lines": total,
+            "source": "\n".join(selected),
         }
 
     @tool

@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 402 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 421 tests; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -57,6 +57,23 @@ graphs remain path-insensitive and do not prove runtime values.
 Commit `02845d679551f21c496a30ba8146406d122b5dda` passed all six native
 Windows/Linux/macOS and Python 3.11/3.13 jobs, including tests, lint, formatting
 and package builds: [CI run 34723188126](https://github.com/skanga/banger/actions/runs/34723188126).
+
+## Physical source lines and edit diffs
+
+`read_file` now enumerates physical file lines, retaining Unicode separators,
+vertical tabs and form feeds inside line content. It keeps only the requested
+range while counting total lines. Single and grouped edits share a diff builder
+that splits only CR/LF boundaries and preserves the source line endings.
+
+Nineteen cases in `test_source_reads.py` cover agreement between indexed
+definition locations and file-read ranges for LF/CRLF sources, exact Unicode
+content, empty files, missing/final newlines, ordinary CR-only file reads,
+out-of-range reads, and single/grouped diffs with exact edit/undo bytes. Ten
+read cases and four diff cases failed before their fixes; five basic read
+boundary cases already passed. Previously Unicode separators inflated line
+counts and caused an extra diff context-prefix space inside a displayed string.
+This verifies source/diff data; terminal rendering of unusual Unicode control
+characters can still vary, and CR-only index-location agreement is unverified.
 
 ## Direct Python module attribute reads
 
