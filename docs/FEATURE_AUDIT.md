@@ -62,6 +62,28 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Persistent conversation plans
+
+The independent `update_plan` and `get_plan` tools provide session-scoped plans.
+An update atomically replaces the current validated steps and explanation in
+the artifact store. Plans allow pending/in_progress/completed statuses and at
+most one active step, with up to 20 steps of 500 characters and a 2,000-character
+explanation. Empty lists clear the plan. This is conversation state available
+in every permission mode, rather than an edit to project source or project facts.
+
+The agent includes the current saved plan as data in each model turn, so context
+shortening does not remove the current plan and resuming does not pick up another
+conversation's plan. Updates use the existing Tools result display. A local
+100x32 capture was rendered and visually inspected; three steps, their statuses
+and the explanation were readable. The raw capture remains local.
+
+Ten tests cover persistence, isolation, status progression, clearing, invalid
+JSON/shape/status, multiple active steps, size limits, missing sessions, and a
+resumed model request containing the saved plan. Nine initial cases failed on
+the missing tools/context. The full local suite passed 605 tests with two expected
+POSIX-only skips in 63.75 seconds. Lint, formatting and builds passed after test
+import whitespace was corrected. Other capability gaps remain open.
+
 ## Removal of stale project facts
 
 The independent `forget_fact` tool removes a saved project fact by exact key and

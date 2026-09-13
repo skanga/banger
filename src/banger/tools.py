@@ -16,6 +16,7 @@ from banger.execution import Executor
 from banger.index import CodeIndex
 from banger.markup import MarkupIndex
 from banger.permissions import Action, Decision
+from banger.plans import validate_plan
 from banger.text_search import search_text
 from banger.tracing import trace_file
 
@@ -412,6 +413,22 @@ class Toolbox:
         await self.authorize(Action("edit", path=path), "Write generated reproduction:\n" + content)
         await self.blocking(self.editor.write, path, content)
         return await self.execute_from(path, python=python)
+
+    @tool
+    async def update_plan(self, plan_json: str, explanation: str = ""):
+        """Replace this conversation's plan. JSON list of {step, status}; statuses pending/in_progress/completed, at most one active. Empty list clears it. Conversation state, available in every permission mode."""
+        if not self.session:
+            raise ValueError("No active conversation")
+        plan = validate_plan(plan_json, explanation)
+        self.state.put_artifact("plan", self.session, plan)
+        return plan
+
+    @tool
+    async def get_plan(self):
+        """Read the latest saved plan for this conversation, including after resuming."""
+        if not self.session:
+            raise ValueError("No active conversation")
+        return self.state.artifact("plan", self.session) or {"steps": [], "explanation": ""}
 
     @tool
     async def remember_fact(self, key: str, value: str):
