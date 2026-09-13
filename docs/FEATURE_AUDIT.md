@@ -76,6 +76,12 @@ successfully or that imported mutable values retain their current identity.
 Module-object attribute access, star imports, dynamic import hooks, exact
 runtime search-path precedence and branch/assignment ordering remain unresolved.
 
+Verification: all 388 local Windows tests passed, with Ruff lint/format checks
+and wheel/source-distribution builds. Commit
+`c90f24921fb9ed46bead9c54c8a32dfce825d411` passed all six native Windows,
+Linux and macOS jobs on Python 3.11 and 3.13, including tests, lint, formatting
+and builds: [CI run 34727158472](https://github.com/skanga/banger/actions/runs/34727158472).
+
 ## Live installed-wheel CSS task, 2026-09-12
 
 The wheel built from application commit
