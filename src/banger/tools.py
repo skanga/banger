@@ -421,6 +421,12 @@ class Toolbox:
         return {"saved": key}
 
     @tool
+    async def forget_fact(self, key: str):
+        """Remove one stale project fact by exact key. Does not erase conversation history."""
+        await self.authorize(Action("edit", path=".banger/memory"), f"Forget project fact: {key}")
+        return {"key": key, "removed": self.state.forget_memory(key)}
+
+    @tool
     async def recall_memory(self):
         """Read durable project facts."""
         return self.state.memories()

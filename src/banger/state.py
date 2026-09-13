@@ -81,6 +81,10 @@ class StateStore:
         with self._lock:
             return dict(self.db.execute("SELECT key,value FROM memory"))
 
+    def forget_memory(self, key: str) -> bool:
+        with self._lock, self.db:
+            return self.db.execute("DELETE FROM memory WHERE key=?", (key,)).rowcount > 0
+
     def put_artifact(self, kind: str, key: str, value):
         with self._lock, self.db:
             self.db.execute(

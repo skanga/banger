@@ -62,6 +62,21 @@ This review changes documentation only. The application remains at the code
 verified by the 510-test native run recorded below; no new execution or model
 compatibility result is claimed from the documentation update.
 
+## Removal of stale project facts
+
+The independent `forget_fact` tool removes a saved project fact by exact key and
+reports whether a row existed. It follows the same memory-edit policy as
+`remember_fact`: read-only denies removal, ask mode waits for approval, and
+accept-edits allows it. Parameterized SQL preserves unrelated keys and the
+committed removal survives database reopening. Conversation history is not
+erased; subsequent model turns read the updated current fact collection.
+
+Four regressions cover exact-key removal (including SQL-looking text), repeated
+removal, retention of other facts, reopening, read-only denial, ask-mode denial
+and approval. Three initially failed because the tool was missing. Targeted
+state and permission checks passed 18 tests. Planning and the other tool-inventory
+gaps remain separate work.
+
 ## Read-only project text search
 
 The reference's recorded tool sequences expose project text search in addition

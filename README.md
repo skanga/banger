@@ -130,6 +130,8 @@ Trace values are bounded: strings retain up to 500 characters, supported collect
 
 `.banger/state.db` stores conversations, project facts, parsed indexes, snapshots, and recorded results. The full conversation remains on disk when older model-context results are shortened; history and saved tool-output tools can recover omitted content. Context reduction uses explicit excerpts, not an inferred semantic summary.
 
+Project facts can be saved with `remember_fact`, listed with `recall_memory`, and removed by exact key with `forget_fact`. Saving and removing facts follow the selected edit permission mode. Removing a fact updates future project-memory context but does not erase its mentions in saved conversations.
+
 The provider adapters implement [Anthropic tool-use messages](https://platform.claude.com/docs/en/agents-and-tools/tool-use/handle-tool-calls) and [OpenAI-compatible Chat Completions messages](https://developers.openai.com/api/reference/cli/resources/chat). Streaming tool arguments are assembled before execution. Interrupted or truncated responses are not executed. Response and tool-call structures are validated before saving the assistant message or running any tool in the batch. Valid calls execute sequentially; a later runtime failure does not roll back earlier calls. Transient server and connection failures have bounded retries. There is no subscription-account login integration.
 
 Recovery pairs tool results with call occurrences, so a reused ID in a later response cannot hide an interrupted call. Duplicate IDs within one response, blank IDs and non-string IDs are rejected before tools run. Large outputs use independent artifact IDs to preserve earlier results when a model reuses a call ID.
