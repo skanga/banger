@@ -10,7 +10,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 | Chat, source, diffs, tools, sessions, interrupt, mouse | Textual interaction tests, including 80x24 setup and approval controls | Windows console keyboard/mouse and process-restart checks passed; Linux/macOS PTY setup, mouse navigation and terminal cleanup passed; emulator-specific rendering remains unverified |
 | All ten code languages | test_index.py query matrix; test_language_edits.py tool-level gates, impact and restart undo | These tests do not invoke every language's compiler or prove complete language semantics |
 | Cross-file bindings | test_cross_language.py; Python import tests | Advanced module systems, overloads, macros, dynamic dispatch remain partial |
-| Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases and Ruby constant namespaces; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
+| Definitions, callers, closure, paths, hierarchy, references, outlines | index.py, analysis.py, hierarchy.py, tools.py; query tests | Hierarchy resolves common Python, Java, C#, JS and TS bindings plus same-file C++ lexical bases, Ruby constant namespaces, Rust supertraits and Go declared embedding; other forms retain candidates or unknowns. References retain syntactic scope rather than full type binding |
 | Forward/backward flow across calls | test_flow.py, test_flow_arguments.py, test_flow_defaults.py, test_flow_scopes.py, test_flow_imports.py, test_flow_module_attributes.py; Python signatures, defaults, scopes, imported values and direct module attribute reads | Path-insensitive; ambiguous edges remain candidates; splats and decorated signatures unresolved; runtime values, indirectly imported module objects and dynamic imports unverified; other languages use positional approximations |
 | Markup, CSS, DOM-JS, Python-embedded markup | test_markup.py | Conditional/browser-dependent rules, computed layout and exhaustive selector/cascade semantics not implemented |
 | Syntax and semantic write gates | test_edits.py, test_batch_edits.py, test_language_edits.py; syntax and lost-binding rejection across all ten languages, combined validation for coordinated changes | Semantic gate covers known call regressions and Python signatures, not complete type checking |
@@ -28,7 +28,7 @@ This audit preserves the user's target: an independent terminal coding agent wit
 
 ## Next verification gates
 
-1. Full local Windows suite passed: 564 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
+1. Full local Windows suite passed: 578 tests with two POSIX-only skips; ten-language edit acceptance, scoped semantic-gate regressions, compact-terminal interaction, grouped edits, single-file undo recovery, repeated tool-ID recovery, Python flow argument binding and default origins, module flow isolation, expression scopes, graph limits, call-query scaling, CSS sibling/attribute selectors and source provenance, embedded literal source maps, dynamic template uncertainty, shutdown recovery, C++ hierarchy and Git discovery are included. Native CI results are recorded separately below.
 2. Wheel and source distribution built; isolated Windows installation passed launcher and live agent checks.
 3. Native Windows, Linux and macOS CI passed on Python 3.11 and 3.13; see the recorded run below.
 4. Live OpenAI-compatible coding task passed on 2026-09-11; see details below. Other providers remain covered by mocked tests.
@@ -85,6 +85,10 @@ Local verification passed 578 tests with two expected POSIX-only skips in 67.07
 seconds. Ruff lint and formatting checks and wheel/source builds passed. The
 installed Go 1.26.5 compiler also accepted an isolated fixture with pointer,
 generic and interface embedding, with dependency downloads disabled.
+
+Commit `2aabbde979eb7440e19981036851cec5cfdd7154` passed all six native
+Windows/Linux/macOS jobs on Python 3.11 and 3.13 in
+[CI run 34746671614](https://github.com/skanga/banger/actions/runs/34746671614).
 
 ## Rust declared supertraits and tool inventory review
 
