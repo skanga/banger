@@ -2,6 +2,27 @@
 
 Banger is a terminal coding agent for inspecting projects, making guarded source edits, running commands and tests, and resuming saved conversations. It works with Anthropic and OpenAI-compatible endpoints, including local servers that support tool calling.
 
+## Screenshots
+
+Captured from Banger's interface using a sample shopping-cart project and scripted model responses. The example edit and Python checks run locally.
+
+**Chat workspace:** follow a task from explanation to a verified change.
+
+![Banger chat workspace showing a cart subtotal fix and successful verification](docs/screenshots/chat.png)
+
+<details>
+<summary>View edit approval and diff screenshots</summary>
+
+**Edit approval:** review the proposed replacement before allowing it.
+
+![Banger approval dialog showing the old and new code with Allow once and Deny controls](docs/screenshots/approval.png)
+
+**Diff review:** inspect the resulting source change in the Diffs tab.
+
+![Banger Diffs tab showing the subtotal calculation updated to include item quantities](docs/screenshots/diff.png)
+
+</details>
+
 ## Install
 
 Banger requires Python 3.11 or later and runs on Windows, Linux, and macOS. Install Git when working in a Git repository. You do not need to clone Banger to use it.
