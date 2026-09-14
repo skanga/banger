@@ -6,7 +6,5 @@ __pycache__/
 .banger/
 dist/
 *.egg-info/
-Benzi/
-mini-swe-agent/
 .env
 .env.*
