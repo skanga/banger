@@ -1,8 +1,16 @@
+import asyncio
+
 import pytest
 from textual.widgets import Input, Select
 
 from banger.app import BangerApp
 from banger.permissions import Mode
+
+
+async def wait_for_startup(pilot):
+    async with asyncio.timeout(5):
+        while pilot.app.agent is None:
+            await pilot.pause(0.01)
 
 
 def saved_config(**changes):
@@ -23,7 +31,7 @@ async def test_saved_configuration_starts_without_setup(tmp_path, monkeypatch, m
     app = BangerApp(tmp_path)
     app.state.put_artifact("config", "last", saved_config(mode=mode.value))
     async with app.run_test() as pilot:
-        await pilot.pause()
+        await wait_for_startup(pilot)
         assert app.screen.id != "setup"
         assert app.agent.tools.policy.mode is mode
         assert app.client.config.model == "local-model"
@@ -31,7 +39,7 @@ async def test_saved_configuration_starts_without_setup(tmp_path, monkeypatch, m
         assert app.state.artifact("config", "last")["mode"] == "read-only"
     restarted = BangerApp(tmp_path)
     async with restarted.run_test() as pilot:
-        await pilot.pause()
+        await wait_for_startup(pilot)
         assert restarted.agent.tools.policy.mode is Mode.READ_ONLY
 
 
@@ -41,7 +49,7 @@ async def test_saved_configuration_uses_environment_key(tmp_path, monkeypatch, p
     app = BangerApp(tmp_path)
     app.state.put_artifact("config", "last", saved_config(provider=provider, requires_api_key=True))
     async with app.run_test() as pilot:
-        await pilot.pause()
+        await wait_for_startup(pilot)
         assert app.screen.id != "setup"
         assert app.client.config.api_key == "environment-key"
         assert "api_key" not in app.state.artifact("config", "last")
