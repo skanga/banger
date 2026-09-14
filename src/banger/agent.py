@@ -128,7 +128,7 @@ class Agent:
                     f"\nCommand shell: {self.tools.shell}\nPython interpreter: {sys.executable}"
                     f"\nPermission mode: {self.tools.policy.mode.value}"
                 )
-                self.on_event("status", "Thinking")
+                self.on_event("status", "Working")
                 response = await self.model.generate(
                     system,
                     self.context.prepare(self.messages),

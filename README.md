@@ -23,6 +23,8 @@ Banger constrains tree-sitter to the 0.25 series: 0.26.0 produced native crashes
 
 The setup screen asks for a provider, model ID, API base URL, optional stronger model, shell, and permission mode. Choose Anthropic or an OpenAI-compatible service, including a local server that supports Chat Completions tool calling. Use the provider's exact model ID. Base URLs include the API prefix, typically `/v1`.
 
+Banger remembers these settings per project, including permission changes made with Ctrl+P. Subsequent launches skip setup when the saved configuration is complete and any required API key is available from the environment. Run `banger --setup` (or `banger --setup <directory>`) to edit the saved settings. If setup is needed again, the previous permission mode is preselected.
+
 API keys can be entered in the masked setup field or supplied through `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`. A local endpoint may leave the key blank. Keys entered in setup stay in memory and are not saved in configuration or conversation history. After restarting, enter the key again or use an environment variable.
 
 ## Terminal workflow

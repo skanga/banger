@@ -5,6 +5,7 @@ import json
 import os
 from pathlib import Path
 from typing import ClassVar
+from urllib.parse import urlsplit
 
 from rich.syntax import Syntax
 from rich.text import Text
@@ -41,6 +42,15 @@ from banger.tools import Toolbox
 from banger.wrapped_log import WrappedLog
 
 
+def requires_api_key(config):
+    return bool(
+        config.get("requires_api_key")
+        or config.get("api_key")
+        or config.get("provider") == "anthropic"
+        or urlsplit(config.get("base_url", "")).hostname == "api.openai.com"
+    )
+
+
 class Setup(ModalScreen):
     def __init__(self, saved=None):
         super().__init__(id="setup")
@@ -72,8 +82,17 @@ class Setup(ModalScreen):
                 placeholder="Optional stronger model ID",
                 id="stronger",
             )
-            yield Label("Permission mode — choose for this session")
-            yield Select([(m.value, m.value) for m in Mode], prompt="Choose permissions", id="mode")
+            yield Label("Permission mode — remembered for this project")
+            yield Select(
+                [(m.value, m.value) for m in Mode],
+                value=(
+                    self.saved["mode"]
+                    if self.saved.get("mode") in {m.value for m in Mode}
+                    else Select.NULL
+                ),
+                prompt="Choose permissions",
+                id="mode",
+            )
             yield Select(
                 [("cmd", "cmd"), ("bash", "bash")],
                 value=self.saved.get("shell", "cmd" if os.name == "nt" else "bash"),
@@ -161,6 +180,50 @@ class ProjectTree(DirectoryTree):
     def filter_paths(self, paths):
         return [p for p in paths if p.name not in EXCLUDED and not p.is_symlink()]
 
+    def on_mount(self):
+        # Widget-owned workers are cancelled automatically when the tree unmounts.
+        self.run_worker(self._watch_directories(), group="directory-changes")
+
+    @staticmethod
+    def _directories_changed(snapshots):
+        for path, previous in snapshots:
+            try:
+                with os.scandir(path) as entries:
+                    current = {
+                        (entry.name, entry.is_dir())
+                        for entry in entries
+                        if entry.name not in EXCLUDED and not entry.is_symlink()
+                    }
+            except (FileNotFoundError, NotADirectoryError):
+                return True
+            except OSError:
+                # Inaccessible directories must not interrupt the interface.
+                continue
+            if current != previous:
+                return True
+        return False
+
+    async def _watch_directories(self):
+        while True:
+            await asyncio.sleep(1)
+            # Inspect only cached listings, including previously opened folders.
+            # Unopened directories are read normally when the user expands them.
+            snapshots = []
+            pending = [self.root]
+            while pending:
+                node = pending.pop()
+                if node.data and node.allow_expand and node.data.loaded:
+                    snapshots.append(
+                        (
+                            node.data.path,
+                            {(item.data.path.name, item.allow_expand) for item in node.children},
+                        )
+                    )
+                    pending.extend(node.children)
+            if await asyncio.to_thread(self._directories_changed, snapshots):
+                # Textual's reload preserves expanded paths and the selected entry.
+                await self.reload()
+
 
 class ModePicker(ModalScreen):
     BINDINGS: ClassVar = [("escape", "cancel", "Cancel")]
@@ -229,8 +292,9 @@ class BangerApp(App):
         ("ctrl+l", "focus_prompt", "Prompt"),
     ]
 
-    def __init__(self, root):
+    def __init__(self, root, *, setup=False):
         super().__init__()
+        self.show_setup = setup
         self.root = Path(root).resolve()
         self.state = StateStore(self.root / ".banger/state.db")
         self.agent = None
@@ -238,6 +302,10 @@ class BangerApp(App):
         self.worker = None
         self.draft = ""
         self.session_ids = []
+        self._status_text = "Choose a model and permission mode to begin"
+        self._working = False
+        self._awaiting_approval = False
+        self._activity_frame = 0
 
     def compose(self):
         yield Header()
@@ -263,7 +331,26 @@ class BangerApp(App):
         yield Footer()
 
     def on_mount(self):
-        self.push_screen(Setup(self.state.artifact("config", "last")), self.configure)
+        self._status_widget = self.query_one("#status", Static)
+        self._activity_timer = self.set_interval(0.15, self._animate_activity, pause=True)
+        self._terminal_control("\033[22;2t")  # Save the terminal's existing window title.
+        saved = self.state.artifact("config", "last") or {}
+        key = os.environ.get(
+            "ANTHROPIC_API_KEY" if saved.get("provider") == "anthropic" else "OPENAI_API_KEY",
+            "",
+        )
+        if (
+            not self.show_setup
+            and saved.get("provider") in {"openai", "anthropic"}
+            and saved.get("model", "").strip()
+            and saved.get("base_url", "").startswith(("http://", "https://"))
+            and saved.get("mode") in {m.value for m in Mode}
+            and saved.get("shell") in {"cmd", "bash"}
+            and (key or not requires_api_key(saved))
+        ):
+            self.call_after_refresh(self.configure, {"stronger_model": "", **saved, "api_key": key})
+        else:
+            self.push_screen(Setup(saved), self.configure)
 
     async def configure(self, config):
         if not config:
@@ -271,6 +358,7 @@ class BangerApp(App):
         if self.client:
             await self.client.client.aclose()
         saved = {k: v for k, v in config.items() if k != "api_key"}
+        saved["requires_api_key"] = requires_api_key(config)
         self.state.put_artifact("config", "last", saved)
         self.client = ModelClient(
             ModelConfig(config["provider"], config["model"], config["base_url"], config["api_key"])
@@ -289,14 +377,46 @@ class BangerApp(App):
         self.query_one("#prompt", Input).focus()
 
     def _status(self, text):
+        self._status_text = text
+        self._working = text == "Working" or text.startswith("Running ")
+        self._render_status()
+
+    def _terminal_control(self, sequence):
+        if self._driver is not None and not self.is_headless:
+            self._driver.write(sequence)
+
+    def _animate_activity(self):
+        self._activity_frame += 1
+        self._render_status()
+
+    def _render_status(self):
         if not self.is_running:
             return
+        text = self._status_text
+        title = "Banger"
+        if self._awaiting_approval:
+            text = "🔔 Action required" + "." * (self._activity_frame % 4)
+            title = text + " | Banger"
+        elif self._working:
+            frame = "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"[self._activity_frame % 10]
+            text = f"{frame} Working"
+            if self._status_text.startswith("Running "):
+                text += " · " + self._status_text
+            title = f"{frame} Working | Banger"
+        if self._working or self._awaiting_approval:
+            self._activity_timer.resume()
+        else:
+            self._activity_timer.pause()
+            self._activity_frame = 0
+        if title != self.title:
+            self.title = title
+            self._terminal_control(f"\033]2;{title}\033\\")
         prefix = (
             f"{self.agent.model.config.model} | {self.agent.tools.policy.mode.value} | "
             if self.agent
             else ""
         )
-        self.query_one("#status", Static).update(prefix + text)
+        self._status_widget.update(prefix + text)
 
     async def approve(self, action, detail):
         future = asyncio.get_running_loop().create_future()
@@ -307,6 +427,9 @@ class BangerApp(App):
                 future.set_result(answer)
 
         self.push_screen(screen, finish)
+        self._awaiting_approval = True
+        self._render_status()
+        self.bell()
         try:
             return await future
         finally:
@@ -314,6 +437,8 @@ class BangerApp(App):
             # Remove overlays as well so an expired request cannot reappear.
             while screen in self.screen_stack:
                 self.pop_screen()
+            self._awaiting_approval = False
+            self._render_status()
 
     async def on_input_submitted(self, event: Input.Submitted):
         if event.input.id != "prompt" or not event.value.strip() or not self.agent:
@@ -327,10 +452,12 @@ class BangerApp(App):
         self.worker = self.run_worker(self._run(prompt), exclusive=True, group="agent")
 
     async def _run(self, prompt):
+        self._status("Working")
         try:
             await self.agent.run(prompt)
         except asyncio.CancelledError:
             self.clear_draft()
+            self._status("Interrupted; session saved")
             raise
         except Exception as exc:  # noqa: BLE001 -- keep provider/tool failures inside the TUI
             self.clear_draft()
@@ -340,6 +467,8 @@ class BangerApp(App):
                 )
                 self._status("Stopped with an error; session saved")
         finally:
+            self._working = False
+            self._render_status()
             await self.refresh_sessions()
 
     def clear_draft(self):
@@ -463,13 +592,20 @@ class BangerApp(App):
     def set_mode(self, mode):
         if mode is not None:
             self.agent.tools.policy.mode = mode
-            self._status("Permission mode updated")
+            saved = self.state.artifact("config", "last") or {}
+            saved["mode"] = mode.value
+            self.state.put_artifact("config", "last", saved)
+            if self._working or self._awaiting_approval:
+                self._render_status()
+            else:
+                self._status("Permission mode updated")
 
     def action_focus_prompt(self):
         self.query_one("#tabs", TabbedContent).active = "chat-tab"
         self.query_one("#prompt", Input).focus()
 
     async def on_unmount(self):
+        self._activity_timer.stop()
         if self.worker:
             self.worker.cancel()
             try:
@@ -479,6 +615,7 @@ class BangerApp(App):
         if self.client:
             await self.client.client.aclose()
         self.state.close()
+        self._terminal_control("\033[23;2t")  # Restore the title saved on mount.
 
 
 def main():
@@ -486,8 +623,9 @@ def main():
 
     parser = argparse.ArgumentParser(description="Banger terminal coding agent")
     parser.add_argument("directory", nargs="?", default=".", help="Project directory")
+    parser.add_argument("--setup", action="store_true", help="Edit the saved project settings")
     args = parser.parse_args()
     root = Path(args.directory).resolve()
     if not root.is_dir():
         parser.error("Project directory does not exist")
-    BangerApp(root).run()
+    BangerApp(root, setup=args.setup).run()
